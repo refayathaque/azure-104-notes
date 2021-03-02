@@ -32,7 +32,7 @@
 ### Manage resource groups
 
 - ✔️ Feb 27
-- ARM (Azure Resource Management) for Resource Groups (RG) - Organization structure for Azure resources, makes it easy to group resources for testing/projects/etc. - All resources within the RG will be deleted if the RG is deleted
+- ARM (Azure Resource Manager) for Resource Groups (RG) - Organization structure for Azure resources, makes it easy to group resources for testing/projects/etc. - All resources within the RG will be deleted if the RG is deleted
 - Locks prevent the content of the RG from changing, making it read-only - E.g., a lock won't allow you to even stop a VM in a RG
 - For certain resources, like storage accounts, you must declare a resource group at creation
 - You can assign policies to RGs, e.g., only allow resources creation in RG to certain regions
@@ -69,24 +69,24 @@
 ### Create & configure storage accounts
 
 - ✔️ Feb 28
-- Azure Storage is for Azure Blobs (objects), Azure Data lake Storage Gen2, Azure Files, Azure Queues (e.g., FIFO/LIFO), & Azure Tables (stores data in columns and rows)
+- Azure Storage is for Azure Blobs (objects), Azure Data lake Storage Gen2, Azure Files, Azure Queues (e.g., FIFO/LIFO), & Azure Tables (stores data in columns & rows)
 - Costs will vary depending on the region, performance/access tier, replication, account kind (e.g., general purpose V2), etc.
 - Can be accessible only in VNets (hence within subnets as well) or be accessible to all networks - If you select VNet you won't be able to access yourself even in the portal, so you'll need to whitelist your IP address
 - Blob accounts live within Storage Accounts, & they have containers for objects (containers akin to S3 buckets) 
 - Block blobs are fine for most use bases - Page blobs for partial updates - Append blobs for adding to a file
-- Blob Storage (another kind of Storage Account kind, in addition to General Purpose V1 and V2) - Different from other kinds because _they only store Blobs_ - Can use to host public documents like images/documents/etc.
+- Blob Storage (another kind of Storage Account kind, in addition to General Purpose V1 & V2) - Different from other kinds because _they only store Blobs_ - Can use to host public documents like images/documents/etc.
 - Use Access Keys to authenticate your apps when making requests to Azure Storage Accounts (you're provided with 2 keys) - Keys can be regenerated if compromised
-- SAS (Shared Access Signature): URI that grants restricted access rights to Azure Storage resources - Can set time limits, which storage resources can be accessed, IP addresses, protocol, and CRUD permissions - Use this when you don't want to provide Access Keys - Essentially a _token_
-- Redundant Storage - Locally-redundant (replications (3 copies) in the same data center/region), geo-redundant (replicates to another region (region-pairs), e.g., if you're in Canada Central, it'll replicate to Canada East) and read-access geo-redundant options available for most regions, some regions will have more options available
+- SAS (Shared Access Signature): URI that grants restricted access rights to Azure Storage resources - Can set time limits, which storage resources can be accessed, IP addresses, protocol, & CRUD permissions - Use this when you don't want to provide Access Keys - Essentially a _token_
+- Redundant Storage - Locally-redundant (replications (3 copies) in the same data center/region), geo-redundant (replicates to another region (region-pairs), e.g., if you're in Canada Central, it'll replicate to Canada East) & read-access geo-redundant options available for most regions, some regions will have more options available
 - You can set a failover, so in the e.g., above, you can set Canada East as the Primary for failover
 - If read-access geo-redundant replication chosen you'll have a secondary endpoint to access in case the primary is down (file service won't have a secondary endpoint for some reason)
 - RBAC (Role-Baed Access Control) Authentication for Storage - Use Role Assignments to give Apps/Users access to Storage Accounts - There are a lot of specific storage resource based Roles, they are all under "Storage *"
-- Access Tiers - Implication related to how much you're going to get charged for storage and access (2 distinct concepts) - Going for _"Cool" will halve your storage costs but double your access costs (paying twice for read/write) when compared to "Hot"_ - Can set on a file basis too, e.g., you can set one file that you know will hard be used in a container to "Cool" while leaving others in the container to "Hot"
+- Access Tiers - Implication related to how much you're going to get charged for storage & access (2 distinct concepts) - Going for _"Cool" will halve your storage costs but double your access costs (paying twice for read/write) when compared to "Hot"_ - Can set on a file basis too, e.g., you can set one file that you know will hard be used in a container to "Cool" while leaving others in the container to "Hot"
 - All Access Tiers from most expensive to least: Premium (8x more expensive compared to Hot for storage, but 1/3 of Hot for read/write operations), Hot, Cool, Archive
 - Lifecycle Management: Use policies to transition your data to the appropriate access tiers or expire (delete) at the end of the data's lifecycle
-- Object Replication: When enabled, blobs are copied asynchronously from a source storage account to a destination account - You can set up replication rules where you declare the source container and the destination container, filters (add prefix match), and what exactly you want to copy over (e.g., only new object/all files/etc.)
-- Only the General Purpose V2 and Blob storage account types support the Archive access tier
-- Blob Storage account can be used to make all sorts of files publically accessible, like images/documents/static website files - But using a CDN is a more optimized way of serving these static files to users around the world (using caching) - CDN is a global resource and does not live in any region - 4 pricing tiers, with the cheapest one being the Microsoft one, and the most expensive being the Premium Verizon (there is also a Standard Akamai in the middle) - Tiers vary by what benefits they offer
+- Object Replication: When enabled, blobs are copied asynchronously from a source storage account to a destination account - You can set up replication rules where you declare the source container & the destination container, filters (add prefix match), & what exactly you want to copy over (e.g., only new object/all files/etc.)
+- Only the General Purpose V2 & Blob storage account types support the Archive access tier
+- Blob Storage account can be used to make all sorts of files publically accessible, like images/documents/static website files - But using a CDN is a more optimized way of serving these static files to users around the world (using caching) - CDN is a global resource & does not live in any region - 4 pricing tiers, with the cheapest one being the Microsoft one, & the most expensive being the Premium Verizon (there is also a Standard Akamai in the middle) - Tiers vary by what benefits they offer
 - CDN (Content Delivery Network) - allows you to improve performance by removing the burden of serving static, unchanging files from the main server to a network of servers around the globe; a CDN can reduce traffic to a server by 50% or more, which means you can serve more users or serve the same users faster
 
 ### Import & export data to Azure
@@ -98,24 +98,49 @@
 
 - ✔️ Feb 28
 - Azure Files is part of regular Storage Accounts, unlike Blobs, Files can be accessed as drives from your own computer (over port 445) or can be mounted to VMs to be accessed through their own operating systems - A use case can be giving access to a File Share (the container where Files are stored in Azure Files) several VMs for all developers to store certain files in a centralized location
-- Azure File Sync replicates files from your on-premises Windows Server to an Azure file share, enabling you to centralize your file services in Azure while maintaining local access to your data - Install Azure File Sync Agent to your server and set the File Share container for sync to be established
-- If you're having issues with Azure File Sync, don't remove and recreate the server endpoint, _removing a server endpoint is not like rebooting a server and is not the solution_ - Removing a server endpoint is a destructive operation, and may result in data loss in the case that tiered files exist outside of the server endpoint namespace
+- Azure File Sync replicates files from your on-premises Windows Server to an Azure file share, enabling you to centralize your file services in Azure while maintaining local access to your data - Install Azure File Sync Agent to your server & set the File Share container for sync to be established - Azure File Sync service is used as a file distribution service
+- If you're having issues with Azure File Sync, don't remove & recreate the server endpoint, _removing a server endpoint is not like rebooting a server & is not the solution_ - Removing a server endpoint is a destructive operation, & may result in data loss in the case that tiered files exist outside of the server endpoint namespace
 
 ### Implement backup & recovery
 
-- ❌ Mar 1
+- ✔️ Mar 1
+- Azure Backup - Can be set up in Backup & Site Recovery (OMS) by creating a Recovery Services Vault (needs specific Subscription, RG & Location/Region, the Location _must be the same as the resources you are backing up_) - You can back up on-premise resources as well - As of now you can back up an Azure VM, File Share or SQL Server in Azure VM - The Backup policy will allow you to choose a schedule & how long to keep backups for
+- To backup any resource in Azure, the first thing you need to do is to create a Recovery Services vault (RSV)
+- File Recovery from a VM Backup - Select a recovery point & download the executable, which is a script that will mount the disks (will remain mounted for 12 hours) from the selected recovery point as local drives on the machine where it is run
+- On-Premises Backup - Install Recovery Services agent, download the vault credentials to register the server to the vault, then schedule backups using Recovery Services agent UI (this method is for just backing up files & folders) - If you want the backup to be Bare Metal Recovery or of a Microsoft SQL Server (there are other options too), you need to install the Microsoft Azure Backup Server
+- Backup Reports - Turn on Diagnostics first & choose how to store logs & what to log, you also need to select a storage account - Backup Reports will use Power BI for you to view report dashboards, download reports & create custom reports
+- Soft Delete for VM Backups - A soft delete is when you delete something but it doesn't actually get deleted right away, there is a delay, & this allows you to change your mind - This is a security feature in case someone hacks into your account & starts deleting your backups - Enabled by default on new RSV, you get _14 days to delete back up data, can be un-deleted during this 14-day window, but on the 15th day it will auto-delete_
+- The primary goal of cloud-based backup services is to _prevent data loss by backing up VMs and other resources that store data_, not achieve high availability in terms of having no downtime if systems go down
+- Azure Site Recovery (ASR) / ASR to Site-to-Site Replication - For setting this up in a VM go to Disaster Recovery & you will see the option for you to replicate the VM to another region (Target region, look at established region pairings when deciding, paired regions have a very high-speed connection with each other) - ASR will create new associated resources for the VM like VNet, Storage Accounts, RGs, etc. - You can check the progress of ASR/replication jobs in the RSV under 'Site Recovery jobs' or within the resource itself
+- ASR Test Failover - Allows you to test recovery (make sure the replicated resources in the target region is working the way they should) without damaging the source - After verifying that the failover worked correctly you can run 'Cleanup test failover' - But running 'Failover' will spin up replicated resources in the target region and stop copying over things from the compromised/in-operational source region - There are no costs associated with replicated resources just sitting idle in the ASR target region, but there will be costs associated with data transfer between the source and target region to maintain the ASR and keep things in sync and there will be some ASR storage costs
 
 ### Azure Virtual Machines
 
-- ❌ Mar 1
+- ✔️ Mar 1
+- Create a VM - You'll need to select the Subscription, RG first, then decide on the name, Region (influences pricing differently), Image, Availability options, Inbound port rules (80 & 443 for Web traffic, 22 for SSH, 3389 for RDP), VNet, Subnet, SG, etc. - Spot instance: Getting a VM at a much cheaper price but run the risk of getting evicted at any time (good for low priority tasks)
+- Connect to a VM - Using RDP (use administrator credentials you created when configuring the VM), SSH (using private key) or Bastion (if configured)
+- VM Availability - Options will vary by Region, and this must be set during VM creation, you can't change Availability options later on - Availability Set: Logical grouping capability for isolating VM resources from each other when they're deployed. Azure makes sure that the VMs you place within an Availability Set run across multiple physical servers, compute racks, storage units, and network switches. If a hardware or software failure happens, only a subset of your VMs are impacted and your overall solution stays operational. (Only works for 2 or more VMs) _99.95%_ availability - Availability Zone: Expand the level of control you have to maintain the availability of the applications and data on your VMs. An Availability Zone is a physically separate zone, within an Azure region. There are three Availability Zones per supported Azure region. Each Availability Zone has a distinct power source, network, and cooling. By architecting your solutions to use replicated VMs in zones, you can _protect your apps and data from the loss of a data center. If one zone is compromised, then replicated apps and data are instantly available in another zone. 99.99% availability_
+- For Availability Sets: Microsoft automatically assigns Virtual Machines across 2 fault domains (physical servers) and 5 update domains to minimize uptime during planned and unplanned outages by default. _The maximum number of FD is 3 and the maximum number of UD is 20._
+- VM Monitoring - Azure Monitoring collects host-level metrics like CPU utilization, disk and network usage for all VMs without any additional software (but you have to Enable guest-level monitoring for more insights and to collect guest-level metrics, logs, etc.) - Need to allocate a storage account for diagnostics data to be sent - Enabling guest-level monitoring takes some time as the storage account may need to be created and the Azure Diagnostics agent installed on the VM
+- VM Custom Script Extension - You want a script to run after the VM is deployed, you do this because it's pointless to just have a base image and no software installed on it - Need to install the Custom Script Extension first - It can download Powershell scripts and files from Azure storage and launch a Powershell script on the VM which in turn can download additional software components
+- Azure Bastion Service - Must exist on it's own Subnet - More secure way (than RDP/SSH) of remotely connecting to a VM - You need to have open ports or have public IP on the VM itself, you connect to the VM through the Bastion
+- Virtual Machine Scale Sets (VMSS) - Akin to AWS ASG - Grow and shrink (scaling) your resource usage depending on your actual needs - Create and manage a group of identical, load balanced VMs. The number of VM instances can automatically increase or decrease in response to demand or a defined schedule - Provides high availability and application resiliency - Allows your application to automatically scale as resource demand changes - You can set a custom scaling policy that'll allow you to set the CPU threshold %s and how many VMs to increase/decrease by, the max/min number of VMs, etc. - What is the maximum number of virtual machines that a virtual machine scale set can support? _1000_
 
-### Windows & Linux VMs
+### ARM Templates
 
-- ❌ Mar 1
+- ✔️ Mar 1
+- In Azure, automation of VM deployments done using ARM (Azure Resource Manager) templates - If the template had parameters as input then the template and parameter .json files would go hand-in-hand, parameter files hold values for the defined parameters in the template file, the template file simply initializes and declares type on the parameters and the parameter file provides the actual values - But, _in order to use ARM templates in an automation, no other files are required_
+Modify Existing ARM Templates - Most of the modification you'll do will be under "resources" in the template file - Azure will maintain the DSC (Desired State Configuration) whenever you deploy an ARM template, only changing resource configuration that you've changed and leaving everything else the way it is
+- You can include a Custom Script Extension in an ARM template and also supply the actual script to then run after the VM is created based on the template configuration
 
 ### Manage Azure VM
 
-- ❌ Mar 1
+- ✔️ Mar 1
+- You can add Data Disks to a VM, the number of Data Disks you are permitted to add depends on the instance type, with the cheapest instances only allowing 2
+- Add another NIC (Network Interface Card) to a VM, allowing it to belong to a different subnet within the same VNet - A new network interface named secondary has been created. The Network interface needs to be added to the Virtual machine. What must be done first in order to ensure that the network interface can be attached to the Virtual Machine? _The VM needs to be stopped first_
+- Change VM Size - After you create a virtual machine (VM), you can scale the VM up or down by changing the VM size. In some cases, you must deallocate the VM first (_causing downtime_). This can happen if the new size is not available on the hardware cluster that is currently hosting the VM.
+- Redeploy a VM - E.g., in Powershell `Set-AzureRmVM -Redeploy -ResourceGroupName "az102rg" -Name "aznewvm002" - Will wipe all existing configuration and redeploy the VM in the RG from scratch - _If you Redeploy the VM, it will be allocated to a different hardware cluster._ This will ensure that demovm is not affected by the maintenance. If you go to the Redeploy blade of your Virtual Machine, you can see the ability to relocate the VM on a different host.
+- You can use the 'Move' command to move resources associated with a VM in a RG to another RG
 
 ### Manage VM backups
 
