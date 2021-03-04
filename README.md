@@ -11,8 +11,8 @@
 ### Azure concepts
 
 - ✔️ Feb 27
-- Core services - Virtual machines, virtual networking (VNet) & storage
-- Virtual machines can be placed on a virtual network - Arranged in "availability sets", placed behind "load balancers" - Abstractions: Azure Batch, Virtual Machine Scale Sets, AKS, Service Fabric
+- Core services - Virtual machines, virtual networking & storage
+- Virtual machines can be placed on a virtual network (VNet) - Arranged in "availability sets", placed behind "load balancers" - Abstractions: Azure Batch, Virtual Machine Scale Sets, AKS, Service Fabric
 - App services - Web or container apps, fully managed servers, supports major runtimes like Python & Node.js - Benefits in scaling, CI, deployment slots
 - Azure storage - Blobs, queues, tables, files - Storage tiers (hot, cool, archive) - Managed or unmanaged - Various levels of replication, local & global
 - Data services (SQL server related) - Azure SQL Database, Azure SQL Managed Instance - Non SQL: Cosmos DB, Azure Database for MySQL, MariaDB, Azure Cache for Redis
@@ -120,7 +120,31 @@
 - Create a VM - You'll need to select the Subscription, RG first, then decide on the name, Region (influences pricing differently), Image, Availability options, Inbound port rules (80 & 443 for Web traffic, 22 for SSH, 3389 for RDP), VNet, Subnet, SG, etc. - Spot instance: Getting a VM at a much cheaper price but run the risk of getting evicted at any time (good for low priority tasks)
 - Connect to a VM - Using RDP (use administrator credentials you created when configuring the VM), SSH (using private key) or Bastion (if configured)
 - VM Availability - Options will vary by Region, & this must be set during VM creation, you can't change Availability options later on - Availability Set: Logical grouping capability for isolating VM resources from each other when they're deployed. Azure makes sure that the VMs you place within an Availability Set run across multiple physical servers, compute racks, storage units, & network switches. If a hardware or software failure happens, only a subset of your VMs are impacted & your overall solution stays operational. (Only works for 2 or more VMs) _99.95%_ availability - Availability Zone: Expand the level of control you have to maintain the availability of the applications & data on your VMs. An Availability Zone is a physically separate zone, within an Azure region. There are three Availability Zones per supported Azure region. Each Availability Zone has a distinct power source, network, & cooling. By architecting your solutions to use replicated VMs in zones, you can _protect your apps & data from the loss of a data center. If 1 zone is compromised, then replicated apps & data are instantly available in another zone. 99.99% availability_
-- For Availability Sets: Microsoft automatically assigns Virtual Machines across 2 fault domains (physical servers) & 5 update domains to minimize uptime during planned & unplanned outages by default. _The maximum number of FD is 3 & the maximum number of UD is 20._
+- There are 3 situations that can adversely impact VMs on Azure, they are: _Unplanned hardware maintenance events_, _Unexpected downtime_, and _Planned maintenance events_
+  - Unplanned hardware maintenance events occurs when the Azure platform evaluated that hardware or a component associated with a physical machine is in a failure condition. When this event occurs, Azure issues an unplanned hardware maintenance event to reduce the impact on the VMs hosted on that hardware. Azure uses live migration technology to migrate the VMs from the failing hardware to a healthy physical machine. It takes a few minutes to be up. Memory, open files, and network connections are maintained, but performance might be reduced before/after an event
+  - An Unexpected downtime occurs when any hardware fails suddenly for VMs, for example, there could be a local network failure, local disk failure, or other rack failures. If the Azure platform detects this type of issue, Azure automatically migrates VMs to a healthy physical machine in the same data-center
+  - Planned maintenance events are periodically performed by Microsoft to improve overall reliability, performance, and security of the platform infrastructure where your VM is running. These events have low impact on your VMs or your cloud services, and only causes machines to reboot
+  - To counter any of the above situations Azure offers **Availability Sets**
+    - Availability Sets ensure that the Azure VMs are deployed across multiple isolated hardware nodes in a cluster. It provides the redundancy solution by spreading your VMs across multiple _fault domains_ and _update domains_
+      - Fault domain (FD)
+        - Two events, Unplanned hardware maintenance events and Unexpected downtime comes under this
+        - Factually a rack of the servers which consume mostly subsystem like network, power, cooling, etc. When you put VMs on an Availability Set, to protect VMs from failure, Azure spreads them over FDs
+        - Suppose we put two VMs into availability set, then Azure will set up VMs in 2 different racks so that if the network, power, etc. fails in one, there is another as backup
+      - Update domain (UD)
+        - Planned maintenance event - where we planned for server or virtual machine updating
+        - Sometimes we need to update some software, or some updates come from Microsoft due to performance, security, etc. issues and it is not automatically updated to your VMs, we need to plan updates. So how is that done without taking your service offline? UDs
+        - It’s similar to the FD, only this time, instead of accidental failure, there is a purposeful move to take down one (or more) of your VMs. So to make sure your service doesn’t go offline because of an update, it will walk through your UDs one after the other
+- For Availability Sets: Microsoft automatically assigns Virtual Machines across 2 FDs (physical servers) & 5 UDs to minimize uptime during planned & unplanned outages by default. _The maximum number of FD is 3 & the maximum number of UD is 20._
+  - | VM  | FD  | UD  |
+    | --- | --- | --- |
+    | 0   | 0   | 0   |
+    | 1   | 1   | 1   |
+    | 2   | 0   | 2   |
+    | 3   | 1   | 3   |
+    | 4   | 0   | 4   |
+    | 5   | 1   | 0   |
+    | 6   | 0   | 1   |
+    | 7   | 1   | 2   |
 - VM Monitoring - Azure Monitoring collects host-level metrics like CPU utilization, disk & network usage for all VMs without any additional software (but you have to Enable guest-level monitoring for more insights & to collect guest-level metrics, logs, etc.) - Need to allocate a storage account for diagnostics data to be sent - Enabling guest-level monitoring takes some time as the storage account may need to be created & the Azure Diagnostics agent installed on the VM
 - VM Custom Script Extension - You want a script to run after the VM is deployed, you do this because it's pointless to just have a base image & no software installed on it - Need to install the Custom Script Extension first - It can download Powershell scripts & files from Azure storage & launch a Powershell script on the VM which in turn can download additional software components
 - Azure Bastion Service - Must exist on it's own Subnet - More secure way (than RDP/SSH) of remotely connecting to a VM - You need to have open ports or have public IP on the VM itself, you connect to the VM through the Bastion
@@ -168,7 +192,7 @@
 
 ### Azure Kubernetes Services (AKS)
 
-- ❌ Mar 2
+- ✔️ Mar 2
 - Kubernetes (K8s) is an abstraction layer on top of a VM, a Cluster is a grouping in K8s & is essentially a collection of VMs
 - When creating your K8s Cluster you have to set the RG, Region (influences pricing), Cluster (collection of VMs, grouped into "Node pools") name, & the Node pool (select the node size, which is basically the VM type, & the node count, how many VMs to have in the pool that's allocated to the Cluster) - _K8s runs your workload by placing containers into Pods to run on Nodes. A node may be a virtual or physical machine_
 - Primary node pool (what is required at Cluster creation) - For production workloads at least 3 nodes (VMs) are recommended for resiliency. For development or test workloads, only 1 node is required. You will _not be able to change the node size (VM type) of this primary node pool after Cluster creation, but you will be able to change the number of nodes & K8s version after creation._ If you would like additional Node pools, you will need to enable the "X" feature on the "Scale" tab which will allow you to add more Node pools after creating the cluster
@@ -183,23 +207,46 @@
 
 ### Manage Virtual Networking
 
-- ❌ Mar 2
+- ✔️ Mar 2
 - When creating the VNet the first big decision you have to make is that of the private Address space (CIDR block), & it'll be something like 10.0.0.0/16, with the Subnet's Address space being something like 10.0.0.0/24 (the second Subnet can have 10.0.1.0/24)
 - Public IP Addresses - You have to create them as a separate resource in Azure, when creating choose things like IP Version, IP address assignment (Dynamic/Static), DNS name label, etc.
 - Network Routing - Done using Route Tables - Which are lists of IP address ranges - Tells Azure how to handle traffic over the VNet - Contains a set of rules, called routes, that specifies how packets should be routed in a VNet. Associated to Subnets, & each packet leaving a Subnet is handled based on the associated route table. Each route table can be associated to multiple subnets, but a subnet can only be associated to a single route table. Packets are matched to routes using the destination, which can be an IP address, a VNet gateway, a virtual appliance, or the internet - When creating a route table the "Address prefix" will have the Subnet's Address space (traffic from), & the "Next hop address" (traffic to) will be that of the "Next hop type's" associated IP - You will also have to "Associate Subnets" when setting up Route Tables
 - Virtual Private Network (VPN) - Allows you to join an external machine/network to an Azure network - Private connection, so there is end-to-end encryption of traffic - Able to access systems bu their private IP address (that have them) - 3 options in Azure: Point to Site (P2S) VPN, Site to Site(S2S) VPN, & Express Route - Both P2S & S2S VPN traffic travel over the public internet but in an encrypted form - S2S requires a physical VPN gateway on your side
   - ![VPN](VPN.png)
-- ExpressRoute is a _private connection_ (traffic does not travel over the public internet) to Azure - Extremely fast and also expensive - Can only be set up with help of the communications provider (ISP) (you need high speed fiber-optic connection) - The "Premium Add-On" allows ExpressRoute to connect to VNets all over the world and not just your local region, and also expands the number of VNets you can connect to from 10 to a number that depends on bandwidth (10 GBps of bandwidth gets you 100 VNet connections) - Pricing for the metered version consists of ISP charges (can go up to $5k for 10 GBps), ExpressRoute charges, and Outbound traffic charges (both to Azure)
-- ExpressRoute Direct - Provisoned directly through Microsoft (ISP not required), connect directly to the global Microsoft backbone (currently there are 150 Edge locations around the world) if you're close to the Edge locations - _Even higher speeds than regular ExpressRoute_, 10 GBps & 100 GBps - Optionally, you can have multiple virtual circuits on one connection, e.g., if you have the 10GBps option, you can provision 1 5GBps circuit and 2 2.5GBps circuits, this allows you to provide networks their own circuits - Needed when you have massive data ingestion requirements - For these immense transfer speeds you must have an internal network (hardware) that supports these speeds
-- Create Azure Firewall
+- ExpressRoute is a _private connection_ (traffic does not travel over the public internet) to Azure - Extremely fast & also expensive - Can only be set up with help of the communications provider (ISP) (you need high speed fiber-optic connection) - The "Premium Add-On" allows ExpressRoute to connect to VNets all over the world & not just your local region, & also expands the number of VNets you can connect to from 10 to a number that depends on bandwidth (10 GBps of bandwidth gets you 100 VNet connections) - Pricing for the metered version consists of ISP charges (can go up to $5k for 10 GBps), ExpressRoute charges, & Outbound traffic charges (both to Azure)
+- ExpressRoute Direct - Provisoned directly through Microsoft (ISP not required), connect directly to the global Microsoft backbone (currently there are 150 Edge locations around the world) if you're close to the Edge locations - _Even higher speeds than regular ExpressRoute_, 10 GBps & 100 GBps - Optionally, you can have multiple virtual circuits on one connection, e.g., if you have the 10GBps option, you can provision 1 5GBps circuit & 2 2.5GBps circuits, this allows you to provide networks their own circuits - Needed when you have massive data ingestion requirements - For these immense transfer speeds you must have an internal network (hardware) that supports these speeds
+- Create Azure Firewall - Protects your VNet resources, fully stateful firewall as a service with built-in high availability & unrestricted cloud scalability, uses a static public IP address for your VNet resources allowing outside firewalls to identify traffic originating from your VNet - When creating the Firewall you'll need to provide a VNet, it's Address space, & the Address space of a dedicated Subnet for the Firewall (this is required & Firewall will automatically create one), & you'll also have to provide a Public IP address - Forced tunneling is an option you can enable, if enabled, an additional Subnet is created for Firewall management traffic (basically all your traffic will go through this _additional_ Subnet) & this Subnet will have direct access to the internet
+- Configure Azure Firewall - 1st step is to create a Route Table (required to tell Azure how to direct Firewall traffic), then associate the Subnet of the VM you want to protect using the Firewall, then create the Route itself with the Address prefix allowing all traffic (0.0.0.0/0) & set the "Next hop type" to "Virtual appliance" (for Firewall) & the "Next hop address" to the _private IP_ Address of the Firewall - Now, any traffic that is being sent to the VM's Subnet will be sent first to the Firewall
+  - Now set a Rule in the Firewall itself - Add an Application rule by setting the Priority (the lower the number the higher the priority, inverse relation), Action & then set the Rules - You'll need to add the VM's Subnet Address space under Target FQDNs, the Protocol:Port, & a FQDN (this will be that of the website this VM can/cannot access depending on the Action)
+  - You can also add a Network rule instead of an Application Rule, which allows you to whitelist/blacklist based on IP addresses
+  - There's also the NAT (Network Address Translation) rule (_but I don't really understand what this does..._)
+- Virtual WAN (Wide Area Network) - When you have 2 or more offices that need to communicate with each other & you're going to use Azure as a Virtual Hub (VPN Gateway) where that traffic goes through (so traffic goes from office A to Azure to office B) - Provides optimized & automated branch-to-branch connectivity through Azure - This is a Global resource, but you have to pick a RG when creating - These Hubs vary in price based on the things like whether it's P2S, S2S, bandwidth, etc.
+  - ![WAN](WAN.png)
+- Why would you use a custom route in a VNet? _To control the flow of traffic in your VNet_ - Custom routes are used to override the default Azure routing so that you can route traffic through a network virtual appliance (NVA)
 
 ### Implement & manage virtual networking
 
-- ❌ Mar 3
+- ✔️ Mar 3
+- VNet Peering - By default a VM (or any other VNet-linked resource) in one VNet _cannot communicate with a VM in another VNet_, unless you set up Peering - You can set bi-directional traffic or uni-directional traffic (can set this also for forwarded traffic (or not allow at all), e.g., traffic from _another_ VNet going through the VNet to get to **another** VNet [VNet A -> VNet B -> VNet C]) - Peering relationships will be deployed to both VNets
+- Global Peering - Allow traffic between VNets that are _not_ in the same region
+- VNets are free of charge, every Subscription is allowed to create up to 50 VNets across all regions - Public IP addresses, & reserved IP addresses used on services inside a VNet, are charged - Network appliances such as VPN Gateway & Application Gateway that are run inside a VNet are also charged - Peering within the same Region is charged for inbound & outbound data transfer, & global peering is obviously more expensive, but by how much depends on the Zone the Region for inbound & outbound data transfer falls in
+- Azure-to-Azure Virtual Network Gateway - Software VPN device for your Azure VNet, use this with a connection to set up a site-to-site VPN connection between an Azure VNet and your local network, or a VNet-to-VNet VPN connection between two Azure VNets (guess this is an alternative to Peering, can be local or global) - You can install Virtual Network Gateways in _Gateway subnets_ - Azure will charge for the VPN gateway that connects to on-premises and other VNets in Azure, the charge is based on the amount of time that gateway is provisioned and available (_different from Peering in that inbound traffic is free for Inter-VNet [i.e., data going into Azure data centers between 2 VNets]_)
+- Adding a Network Gateway Connection - You need to manually set up the connection after the Gateways have been created, go to "Connections" and decide on the Connection type (e.g., VNet-to-VNet), First virtual network gateway (e.g., `vnetgateway`), Second virtual network gateway (e.g., `vnetgatewayjapan`), Shared key (used to establish encryption for the connection)
+- Advantage of using a Virtual Network Gateway over Peering: _Scalable_ & _VNet Gateway is the way to **encrypt** the traffic between two networks_
+- Which of the following needs to be setup in Azure for the Site-to-Site VPN connection? _A gateway subnet_
 
 ### Configure name resolution
 
-- ❌ Mar 3
+- ✔️ Mar 3
+- Azure DNS (Domain Name System) Service - 3 options: Azure provides DNS (default), you provide DNS (run your own DNS server), and Azure Private DNS
+- Azure Provided DNS - No configuration required, can use hostnames to connect to machines on same VNet, a VM can refer to another VM on the same network just by its hostname (e.g., azsjdnewvm2) without requiring a FQDN
+- Azure Private DNS - Create your own custom domain names and have them recognized by your VMs (e.g., dev.local, staging.local, production.local) - Only valid on your own VNet and not on the Internet, doesn't have to be a registered or valid domain - **Label.label** format, up to 34 labels - Works from VNet to VNet for VMs, but does not work for App Services (pretty much exclusive to VMs)
+- In general, it's just easier to be able to reference your VMs by a "name" instead of an IP address
+- Create a Private DNS Zone - After creation link to the VNet by going to "Virtual network links" and adding (Enable auto registration, this will automatically associate [create Type A record sets] the VMs in the VNet to the Private DNS Zone) - All you have to do after that is create new Record sets for the VMs by providing a name of your choosing (e.g., webserver.devserver.local, `devserver.local` is the Private DNS Zone name) and the VM's IP address
+- Create a Public DNS Zone - E.g., refayathaque.com - Used to host the DNS records for a particular domain. For example, the domain 'contoso.com' may contain a number of DNS records such as 'main.contoso.com' and 'www.contoso.com' - Azure DNS allows you to host your DNS zone and manage you DNS records, and provides name servers (e.g., `ns1-07.azure-dns.com.`, `ns2-07.azure-dns.net.`, `ns1-07.azure-dns.org.`, `ns1-07.azure-dns.info.`, ) that will respond to DNS queries from end uses with the DNS records you create
+- Azure DNS allows you to host your registered domains. You can control and configure the domain records, like A, CNAME, MX, and setup alias records
+- What type of DNS record is used to map a custom domain to a web app using its IP address? _A record_
+- If you create a DNS zone in Azure, then you need to first make a note of the Name servers for the DNS zone. Then go to your DNS provider and enter the Name servers for your Domain
 
 ### Secure access to virtual networks
 
