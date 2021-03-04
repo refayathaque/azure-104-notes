@@ -43,8 +43,8 @@
 - ✔️ Feb 27
 - Account - aka User - A person (user) or a program (app), person would have username, password, MFA, while a program could be an app with a managed identity - Serves as the basis for authentication
 - Tenant - Representation of an organization/company - A dedicated instance of Azure AD - _Every Azure Account is part of at least 1 Tenant_ - Usually represented by a public domain name
+  - Tenants need not have subscriptions (meaning they can't create resources) - Tenants can have more than 1 Subscription
 - Subscription - Agreement with Microsoft to use Azure services, & how you're going to pay - All Azure resource usage gets billed to the payment method of the subscription - Free, pay as you go, enterprise agreements
-- Tenants need not have subscriptions (meaning they can't create resources) - Tenants can have more than 1 Subscription
 - Accounts are basically assigned roles within Tenants so there can be more than 1 Account as an owner (i.e., admin) in a Tenant - Grant other Accounts to be part of the Tenant
 - Resource - Entity managed by Azure - E.g., VM, web app, storage account, & these "expected" resources often create "unexpected" resources like, public IP address, network interface card, network security group, etc.
 - Accounts can be given read, update, owner rights to resources
@@ -250,11 +250,50 @@
 
 ### Secure access to virtual networks
 
-- ❌ Mar 3
+- ✔️ Mar 3
+- NSGs (Network Security Groups) - Allows us to specify which type of traffic is allowed/denied - NSGs can be attached to _VMs' Network interfaces or to the Subnet that encompasses them_ - Important to note that by default when creating a new VM, Azure will create a NSG for you and assign it to the VM, also by default this Azure-created NSG has a number of Inbound/Outbound security rules - When adding rules you can declare source IP addresses/CIDR ranges, destination port ranges, protocol, action (allow/deny), priority (the lower the number the higher the priority), etc.
+  - ![defaultNSGRules](defaultNSGRules.png)
+- Implement Effective NSG Rules - Best practice to not have so many NSGs, and _create role-based NSGs_, e.g., have NSGs not for each VM (get rid of the Azure-created NSGs, and associate your custom NSGs to the VMs' Network interfaces) but for things like `HTTPS_Traffic` (for front-end servers) and `RDP_Traffic`
+- If no rules other then the default NSG rules are in place, are VM's on SubnetA and SubnetB be able to connect to the Internet? _Yes, the Outbound rules contains a Rule with the Name of “AllowInternetOutBound”. This would allow all Outbound traffic to the Internet._
+- A network security group can have multiple network interfaces assigned to it. So you can assign a single NSG to multiple VMs
 
-### Manage Azure Active Directory
+### Manage Azure Active Directory (AD)
 
-- ❌ Mar 3
+- ✔️ Mar 3
+- Helps you manage user identities and create intelligence-driven access policies to secure your resources, centralizes IAM to enable deep security, productivity, and management across devices, data, apps, and infrastructure
+- _Both_ the Basic & Premium tiers give you:
+  - ${tier_name} Reports
+  - Group-based access management/provisioning
+  - Self-Service Password Reset for cloud users
+  - Company Branding (Logon Pages/Access Panel customization)
+  - Application proxy
+  - SLA
+- Just the Premium tier gives you:
+  - Self-Service Password Reset/Change/Unlock with on-premises write-back (sync with AD on-premise essentially)
+  - Device objects 2-way synchronization between on-premises directories and Azure AD (Device write-back)
+  - MFA (Cloud and On-premises [MFA Server])
+  - Microsoft Identity Manager user CAL
+  - Cloud App Discovery
+  - Connect Health
+  - Automatic password rollover for group accounts
+  - Conditional Access based on group and location
+  - 3rd party identity governance partners integration
+  - Terms of Use
+  - SharePoint Limited Access
+  - OneDrive for Business Limited Access
+  - 3rd party MFA partner integration
+  - Microsoft Cloud App Security integration
+  - Privileged Identity Management (Premium 2)
+  - Identity Protection (Premium 2)
+  - Access Reviews (Premium 2)
+- 3 main concepts in AD are: **Users** / **Groups** / **Roles**
+- Add Custom Domains - You can't add Users based on their personal/company email addresses when assigning them their "User name" - You need to provide the domain you created when you first set up the AD, which will follow `${AD_domain_name}.onmicrosoft.com`, so in this case the User name for Jack could be jack@refayatactivedirectory.onmicrosoft.com - _However_, you don't _have_ to do this, you can use a Custom Domain for your Users to login using your company's domain name (**you need to own this domain**, can't be something like gmail) - Go to "Custom domain names" and add a new one and Azure will ask you to verify that you have ownership over the domain (You'll have to add the stuff Azure provides to your own DNS configuration)
+  - When adding custom domain names, which of the following record needs to be added to your custom domain registrar? _TXT record_
+- Azure AD Join - Cloud-first or cloud-only AD, when you do not have an on-prem AD, when you do not want to put certain temporary users in your corporate AD, for remote branches with limited on-prem infrastructure, devices will need to be configured for this to work
+- AD Identity Protection - _Only available in Premium 2_ - Get a consolidated view of flagged users and risk events detected using machine learning algorithms, set risk-based Conditional Access policies to automatically protect your users, improve security posture by acting on vulnerabilities - E.g., you can set a sign-in as being High risk level if that sign-in is occurring from Russia and your company is based out of the US, if such a sign-in occurs Azure will deem it as High risk deny the user access based on your policy configuration
+- Conditional Access - You can allow/deny access based on the device they're logging in from, e.g, Android, iOS, Windows Phone, Windows, macOs - You can also set a specific locations from where they can sign in from - You have the choice of allowing/denying access, but you can also allow access with additional conditions like requiring MFA
+- Access Reviews - _Only available in Premium 2_ - Enable reviewers to attest user's membership in a group or access to an application - You can set the start and end date, frequency (how often reviews will be issued), duration (days) to complete the review, users to review, and the scope
+- Managing Multiple Directories - By switching Tenants - IAM will be completely different between Tenants/Directories, just because someone may be an admin in one, doesn't mean they will be an admin in the other (unless configured)
 
 ### Manage Azure AD objects
 
