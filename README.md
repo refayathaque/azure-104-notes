@@ -298,13 +298,13 @@
 ### Manage Azure AD objects
 
 - ✔️ Mar 3
-- Manage Users & Groups - When you create Groups you can choose the Membership type as: _Assigned_ / _Dynamic User (auto add Users based on a rule you set, e.g., you can set it so anyone whose `jobTitle` is "* Manager" gets added to the Group)_ / _Dynamic Device_
+- Manage Users & Groups - When you create Groups you can choose the Membership type as: _Assigned_ / _Dynamic User (auto add Users based on a rule you set, e.g., you can set it so anyone whose `jobTitle` is "\* Manager" gets added to the Group)_ / _Dynamic Device_
 - Self Service Password Reset (SSPR) - _Only available in Premium_ - Select between _None_ / _Selected (choose Group)_ / _All_ - Then you'll have to decide on the how many methods (1/2) you want when resetting, methods can be: Email, Mobile phone, etc.
 - Manage Devices - Devices have to be registered to your AD & this has to be done externally (can't do in portal) - You can allow Users to join/register their devices to Azure AD, & also require MFA when joining devices, you can also set the maximum number of devices per user
 - Bulk Operations - You can now do Bulk _create_ / _invite_ / _delete_ & also _Download users_
 - What kind of account would you create to allow an external organization easy access? A guest user account restricts users to just the access they need
 - You sign up for Azure Active Directory (Azure AD) Premium. You need to add a user named john@demo.onmicrosoft.com.as an administrator on all the computers that will be joined to the Azure AD domain. Where should you go in Azure AD to configure this setting? _If you go to the Devices blade in Azure AD , you can see the option to add local administrators._
-- When you enable SSPR for your Azure AD organization... _Users can reset their passwords when they can't sign in (If the user passes the authentication tests, then they can reset their password)
+- When you enable SSPR for your Azure AD organization... \_Users can reset their passwords when they can't sign in (If the user passes the authentication tests, then they can reset their password)
   - When is a user considered registered for SSPR? _A user is considered registered for SSPR when they've registered at least the number of methods that you've required to reset a password. You can set this number in the Azure portal._
 
 ### Implement multi-factor (MFA: Multi-Factor Authentication)
@@ -315,21 +315,22 @@
 - Configuring Fraud Alerts - Allow your users to report if they receive a 2-step verification request that they didn't initiate, additionally, if this is enabled you can also get Azure to automatically block users who report fraud - A blocked user will not receive MFA requests. Authentication attempts for that user will be automatically denied. A user will remain blocked for 90 days form the time they are blocked. To manually unblock a user, click the "Unblock" action
 - MFA One-time bypass - For times when their MFA device might be compromised (phone lost, phone not working, phone number changed, etc.) - If added to a specific User, they will have a short time (default is 300 seconds) to log in _without_ MFA
 - Azure AD MFA Verification Methods / Trusted IPs - When setting up MFA for Users, there is another tab called "service settings" - There you can decide what verification options you want available to your Users, options are: _Call to phone_ / _Text message to phone_ / _Notification through mobile app_ / _Verification code from mobile app or hardware token_ - You can also "Allow users to remember MFA on devices they trust", if this option is chose you have to provide a number of "Days before a device must re-authenticate" - You could also set "trusted IPs", where you can skip MFA for requests from users on, for example, your office network(s), you need to provide range of IP address subnets (e.g., 99.237.110.0/24)
-  - 2 types of MFA servers exist within Azure: a cloud-based 1, & 1 that you have to run locally yourself - 
+  - 2 types of MFA servers exist within Azure: a cloud-based 1, & 1 that you have to run locally yourself -
 
 ### Manage role-based access control (RBAC)
 
 - ✔️ Mar 4
 - Role-based access control (RBAC) helps you manage who has access to Azure resources, what they can do with those resources, & what areas they have access to.
 - Central question: Once a User is authenticated using their credentials/MFA _what are they allowed to do within Azure_? - Whenever you go a RG you will see "Access control (IAM)", & there you can set the Role assignments & review the level of access of a user, group, service principal, or managed identity has - Add role assignment(s) to give permissions to a User to do things in the RG - You then have to decide what specific Role(s) to assign to this User, there are a lot to pick from, but the 3 main, top-level, ones are:
- - Owner: Can assign permissions/grant access to other Users (🔱)
- - Contributor: Can make changes to, & create new resources, in RG (CRUD)
- - Reader: Only read-only access to RG
+- Owner: Can assign permissions/grant access to other Users (🔱)
+- Contributor: Can make changes to, & create new resources, in RG (CRUD)
+- Reader: Only read-only access to RG
 - "Deny assignments" - Block users from performing specific actions even if a role assignment grants them access
 - Creating Custom RBAC Roles - What if none of the Azure-provided Roles are what you need? - You can create custom Roles using Powershell or CLI - You can take the .json of an existing Azure-provided Role & make changes to it, then upload it
+
 ### Configure load balancing
 
-- ❌ Mar 4
+- ✔️ Mar 4
 - 2 kinds of Load Balancers (LB) in Azure, the "Load Balancer" is a Layer 4 (of the Open Systems Interconnection [OSI] model) LB & the "Application Gateway" is a Layer 7 LB (AGLB) - LBs distributes incoming traffic to multiple resources to ensure that 1 doesn't get overwhelmed & cause app performance issues - Level 4 LBs determine how to distribute traffic based on: _Source IP_ / _Source Port_ / _Destination IP_ / _Destination Port_ / _Protocol_ - LBs can also check the health of resources & drop the "sick" (e.g., unresponsive VM) resource out of it's distribution rotation - When creating an LB you have to decide on the type (Public - has public IP, Internal - has private IP [not accessible from open internet]) - You also have to chose between Basic & Standard, "Standard LB enables you to scale your applications & create high availability for small scale deployments to large & complex multi-zone architectures", Basic supports up to 100 instances whereas Standard supports up to 1000 instances, Basic supports VMs only in _single availability set or VMSS_ whereas Standard supports VMs in _multiple_, Basic can't do Health probes for HTTPS, but Standard can, Basic does not support AZs but Standard does & can offer zone-redundant/cross-zone load balancing - Basic is _free_ whereas Standard is "Charged based on number of rules, data processed inbound & outbound associated with resource"
   - ![Load Balancing](loadBalancing.png)
 - Set up an LB - After you create the LB you need to configure (under "Settings") Backend pools (where resources [VMs] will be associated to either: _Availability Set_ / _Single VM_ / _VMSS_), Health probes (checks over a protocol & port (e.g., TCP over 80 / HTTP over 80 [for this it'll check for 200 response on a set path]), & will do so at a set interval (e.g., every 5 seconds) monitoring if the allowed number of Unhealthy threshold (consecutive failures) is reached), Load balancing rules, etc.
@@ -345,3 +346,10 @@
 ### Monitor & troubleshoot virtual networking
 
 - ❌ Mar 4
+- Network Performance Monitor (NPM) - Network Performance Monitor is a cloud-based hybrid network monitoring solution that helps you monitor network performance between various points in your network infrastructure. It also helps you monitor network connectivity to service and application endpoints and monitor the performance of Azure ExpressRoute
+  - Performance Monitor: You can monitor network connectivity across cloud deployments and on-premises locations, multiple data centers, and branch offices and mission-critical multi-tier applications or microservices. With Performance Monitor, you can detect network issues before users complain.
+  - Service Connectivity Monitor: You can monitor the connectivity from your users to the services you care about, determine what infrastructure is in the path, and identify where network bottlenecks occur. You can know about outages before your users, and see the exact location of the issues along your network path.
+  - ExpressRoute Monitor: Monitor end-to-end connectivity and performance between your branch offices and Azure, over Azure ExpressRoute.
+- Network Watcher - _Regional_ service that enables you to monitor and diagnose conditions at the network scenario level - You need to enable it for your specific region - **Use case:** You can verify rules set up in NSGs by performing the "IP flow verify", where you can simulate traffic in and out of a VM and see if the remote/local IP/port combination is being allowed to flow
+- The necessary peering connections have been created between vnetwork1 and vnetwork2. The firewalls on the virtual machines have been modified to allow ICMP traffic. But traffic does not seem to flow between the virtual machines when the ping request is made. Which of the following can be used to diagnose the issue? _The issue could be due to the security groups. You can diagnose the issue using IP Flow Verify._
+- To analyze traffic, you need to have an existing network watcher, or enable a network watcher in each region that you have NSGs that you want to analyze traffic for.
