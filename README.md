@@ -83,6 +83,8 @@
 - Use Access Keys to authenticate your apps when making requests to Azure Storage Accounts (you're provided with 2 keys) - Keys can be regenerated if compromised
 - SAS (Shared Access Signature): URI that grants restricted access rights to Azure Storage resources - Can set time limits, which storage resources can be accessed, IP addresses, protocol, & CRUD permissions - Use this when you don't want to provide Access Keys - Essentially a _token_
 - Redundant Storage - Locally-redundant (replications (3 copies) in the same data center/region), geo-redundant (replicates to another region (region-pairs), e.g., if you're in Canada Central, it'll replicate to Canada East) & read-access geo-redundant options available for most regions, some regions will have more options available
+  - ![Storage Redundancy Options](storageRedundancyOptions.png)
+    - With GRS or GZRS, the _data in the secondary region isn't available for read or write access unless there is a failover to the secondary region._ For read access to the secondary region, configure your storage account to use read-access geo-redundant storage (RA-GRS) or read-access geo-zone-redundant storage (RA-GZRS).
 - You can set a failover, so in the e.g., above, you can set Canada East as the Primary for failover
 - If read-access geo-redundant replication chosen you'll have a secondary endpoint to access in case the primary is down (file service won't have a secondary endpoint for some reason)
 - RBAC (Role-Baed Access Control) Authentication for Storage - Use Role Assignments to give Apps/Users access to Storage Accounts - There are a lot of specific storage resource based Roles, they are all under "Storage \*"
@@ -194,6 +196,7 @@
 - You can add Data Disks to a VM, the number of Data Disks you are permitted to add depends on the instance type, with the cheapest instances only allowing 2
 - Commands for adding disks to an existing VM:
   - ![Add Disk to VM](addDiskToVM.png)
+    - __config disk__ -> __create disk__ -> __get VM__ -> __add disk to VM__ -> __update VM__
 - Add another NIC (Network Interface Card) to a VM, allowing it to belong to a different subnet within the same VNet
   - A new network interface named secondary has been created. The Network interface needs to be added to the Virtual machine. What must be done first in order to ensure that the network interface can be attached to the Virtual Machine? _The VM needs to be stopped first_
 - Change VM Size - After you create a virtual machine (VM), you can scale the VM up or down by changing the VM size. In some cases, you must deallocate the VM first (_causing downtime_). This can happen if the new size is not available on the hardware cluster that is currently hosting the VM.
