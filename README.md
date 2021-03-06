@@ -33,7 +33,11 @@
 
 - ✔️ Feb 27
 - ARM (Azure Resource Manager) for Resource Groups (RG) - Organization structure for Azure resources, makes it easy to group resources for testing/projects/etc. - All resources within the RG will be deleted if the RG is deleted
-- Locks prevent the content of the RG from changing, making it read-only - E.g., a lock won't allow you to even stop a VM in a RG
+- Locks prevent the content of the RG from changing - E.g., a read-only lock won't allow you to even stop a VM in a RG
+  - As an administrator, you can lock a subscription, resource group, or resource to prevent other users in your organization from accidentally deleting or modifying critical resources. _The lock overrides any permissions the user might have._
+    - You can set the lock level to CanNotDelete or ReadOnly. In the portal, the locks are called __Delete and Read-only__ respectively.
+      - CanNotDelete means authorized users can still read and modify a resource, but they can't delete the resource.
+      - ReadOnly means authorized users can read a resource, but they can't delete or update the resource. Applying this lock is similar to restricting all authorized users to the permissions granted by the Reader role.
 - For certain resources, like storage accounts, you must declare a resource group at creation
 - You can assign policies to RGs, e.g., only allow resources creation in RG to certain regions
 - You can move resources to other RGs, other subscriptions or other regions (_You can put a RG is any region, & you can put resources from any region within this resource group_)
@@ -83,18 +87,21 @@
 - If read-access geo-redundant replication chosen you'll have a secondary endpoint to access in case the primary is down (file service won't have a secondary endpoint for some reason)
 - RBAC (Role-Baed Access Control) Authentication for Storage - Use Role Assignments to give Apps/Users access to Storage Accounts - There are a lot of specific storage resource based Roles, they are all under "Storage \*"
 - Access Tiers - Implication related to how much you're going to get charged for storage & access (2 distinct concepts) - Going for _"Cool" will halve your storage costs but double your access costs (paying twice for read/write) when compared to "Hot"_ - Can set on a file basis too, e.g., you can set 1 file that you know will hard be used in a container to "Cool" while leaving others in the container to "Hot"
-- All Access Tiers from most expensive to least: Premium (8x more expensive compared to Hot for storage, but 1/3 of Hot for read/write operations), Hot, Cool, Archive
+- All Access Tiers from most expensive to least (storage-wise): Premium (8x more expensive compared to Hot for storage, but 1/3 of Hot for read/write operations), Hot, Cool, Archive
 - Lifecycle Management: Use policies to transition your data to the appropriate access tiers or expire (delete) at the end of the data's lifecycle
 - Object Replication: When enabled, blobs are copied asynchronously from a source storage account to a destination account - You can set up replication rules where you declare the source container & the destination container, filters (add prefix match), & what exactly you want to copy over (e.g., only new object/all files/etc.)
 - Only the General Purpose V2 & Blob storage account types support the Archive access tier
 - Blob Storage account can be used to make all sorts of files publically accessible, like images/documents/static website files - But using a CDN is a more optimized way of serving these static files to users around the world (using caching) - CDN is a global resource & does not live in any region - 4 pricing tiers, with the cheapest 1 being the Microsoft 1, & the most expensive being the Premium Verizon (there is also a Standard Akamai in the middle) - Tiers vary by what benefits they offer
 - CDN (Content Delivery Network) - allows you to improve performance by removing the burden of serving static, unchanging files from the main server to a network of servers around the globe; a CDN can reduce traffic to a server by 50% or more, which means you can serve more users or serve the same users faster
+- If you need to only allow connections to the storage account from specific IP addresses/ranges you can configure that under "Firewalls and virtual networks"
+  - When network rules are configured, only applications requesting data over the specified set of networks or through the specified set of Azure resources can access a storage account. You can limit access to your storage account to requests originating from specified IP addresses, IP ranges, subnets in an Azure Virtual Network (VNet), or resource instances of some Azure services.
 
 ### Import & export data to Azure
 
 - ✔️ Feb 28
 - Use Import/export jobs to move large amounts of data into/out of Storage Accounts - For exports Azure will actually ship you a hard drive with all your data - For imports you have to send in your hard drive
 - Used to securely import large amounts of data to _Azure Blob storage & Azure Files_ by shipping disk drives to an Azure datacenter. This service can also be used to transfer data from Azure Blob storage to disk drives & ship to your on-premises sites. Data from one or more disk drives can be imported _either to Azure Blob storage or Azure Files_
+  - ![Import Export Storage Types](importExportStorageTypes.png)
 
 ### Configure Azure files
 
@@ -129,8 +136,11 @@
 - ✔️ Mar 1
 - Create a VM - You'll need to select the Subscription, RG first, then decide on the name, Region (influences pricing differently), Image, Availability options, Inbound port rules (80 & 443 for Web traffic, 22 for SSH, 3389 for RDP), VNet, Subnet, SG, etc. - Spot instance: Getting a VM at a much cheaper price but run the risk of getting evicted at any time (good for low priority tasks)
 - Connect to a VM - Using RDP (use administrator credentials you created when configuring the VM), SSH (using private key) or Bastion (if configured)
-- VM Availability - Options will vary by Region, & this must be set during VM creation, you can't change Availability options later on - Availability Set: Logical grouping capability for isolating VM resources from each other when they're deployed. Azure makes sure that the VMs you place within an Availability Set run across multiple physical servers, compute racks, storage units, & network switches. If a hardware or software failure happens, only a subset of your VMs are impacted & your overall solution stays operational. (Only works for 2 or more VMs) _99.95%_ availability
+- VM Availability - Options will vary by Region, & this must be set during VM creation, you can't change Availability options later on
+  - Availability Set: Logical grouping capability for isolating VM resources from each other when they're deployed. Azure makes sure that the VMs you place within an Availability Set run across multiple physical servers, compute racks, storage units, & network switches. If a hardware or software failure happens, only a subset of your VMs are impacted & your overall solution stays operational. (Only works for 2 or more VMs) _99.95%_ availability
   - Availability Zone (AZ): Expand the level of control you have to maintain the availability of the applications & data on your VMs. An AZ is a physically separate zone, within an Azure region. There are 3 Availability Zones per supported Azure region. Each AZ has a distinct power source, network, & cooling. By architecting your solutions to use replicated VMs in zones, you can _protect your apps & data from the loss of a data center. If 1 zone is compromised, then replicated apps & data are instantly available in another zone. 99.99% availability_
+  - Azure managed disks are block-level storage volumes that are managed by Azure and used with Azure Virtual Machines. Managed disks are designed for _99.999% availability_. Managed disks achieve this by providing you with three replicas of your data, allowing for high durability.
+    - Managed disks provide better reliability for Availability Sets by ensuring that the disks of VMs in an Availability Set are sufficiently isolated from each other to avoid single points of failure. 
 - There are 3 situations that can adversely impact VMs on Azure, they are: _Unplanned hardware maintenance events_, _Unexpected downtime_, & _Planned maintenance events_
   - Unplanned hardware maintenance events occurs when the Azure platform evaluated that hardware or a component associated with a physical machine is in a failure condition. When this event occurs, Azure issues an unplanned hardware maintenance event to reduce the impact on the VMs hosted on that hardware. Azure uses live migration technology to migrate the VMs from the failing hardware to a healthy physical machine. It takes a few minutes to be up. Memory, open files, & network connections are maintained, but performance might be reduced before/after an event
   - An Unexpected downtime occurs when any hardware fails suddenly for VMs, for example, there could be a local network failure, local disk failure, or other rack failures. If the Azure platform detects this type of issue, Azure automatically migrates VMs to a healthy physical machine in the same data-center
@@ -158,11 +168,17 @@
     | 7   | 1   | 2   |
 - VM Monitoring - Azure Monitoring collects host-level metrics like CPU utilization, disk & network usage for all VMs without any additional software (but you have to Enable guest-level monitoring for more insights & to collect guest-level metrics, logs, etc.) - Need to allocate a storage account for diagnostics data to be sent - Enabling guest-level monitoring takes some time as the storage account may need to be created & the Azure Diagnostics agent installed on the VM
 - VM Custom Script Extension - You want a script to run after the VM is deployed, you do this because it's pointless to just have a base image & no software installed on it - Need to install the Custom Script Extension first - It can download Powershell scripts & files from Azure storage & launch a Powershell script on the VM which in turn can download additional software components
-- Azure Bastion Service - Must exist on it's own Subnet - More secure way (than RDP/SSH) of remotely connecting to a VM - You need to have open ports or have public IP on the VM itself, you connect to the VM through the Bastion
+- Azure Bastion Service - _Must exist on it's own Subnet_ - More secure way (than RDP/SSH) of remotely connecting to a VM - You need to have open ports or have public IP on the VM itself, you connect to the VM through the Bastion
+  - The subnet must be named __AzureBastionSubnet__.
+  - The subnet must be __at least /27 or larger__.
 - Virtual Machine Scale Sets (VMSS) - Akin to AWS ASG - Grow & shrink (scaling) your resource usage depending on your actual needs - Create & manage a group of identical, load balanced VMs. The number of VM instances can automatically increase or decrease in response to demand or a defined schedule - Provides high availability & app resiliency - Allows your app to automatically scale as resource demand changes - You can set a custom scaling policy that'll allow you to set the CPU threshold %s & how many VMs to increase/decrease by, the max/min number of VMs, etc. - What is the maximum number of virtual machines that a virtual machine scale set can support? _1000_
   - VMSS is a free service, therefore, it does not have a financially backed SLA
 - _You cannot have VMs that are not in VNets_
 - _A network interface (NIC) is the interconnection between a VM & a virtual network (VNet). A VM must have at least one NIC, but can have more than one_, depending on the size of the VM you create.
+  - You can only assign a NIC to a VNet that exists in the _same subscription and location_
+  - Once a NIC is created, you cannot change the VNet it is assigned to
+  - The VM you add the NIC to must also exist in the _same location and subscription_
+  - NICs for VMs can have _both a private and public IP address_
 - _VMs must be in the same region as their VNet_
 
 ### ARM Templates
@@ -176,6 +192,8 @@
 
 - ✔️ Mar 1
 - You can add Data Disks to a VM, the number of Data Disks you are permitted to add depends on the instance type, with the cheapest instances only allowing 2
+- Commands for adding disks to an existing VM:
+  - ![Add Disk to VM](addDiskToVM.png)
 - Add another NIC (Network Interface Card) to a VM, allowing it to belong to a different subnet within the same VNet
   - A new network interface named secondary has been created. The Network interface needs to be added to the Virtual machine. What must be done first in order to ensure that the network interface can be attached to the Virtual Machine? _The VM needs to be stopped first_
 - Change VM Size - After you create a virtual machine (VM), you can scale the VM up or down by changing the VM size. In some cases, you must deallocate the VM first (_causing downtime_). This can happen if the new size is not available on the hardware cluster that is currently hosting the VM.
@@ -221,6 +239,8 @@
   - E.g, .yaml can specify how much memory (max/min) is required for a specific container, based on that `kubectl` can figure out how many instances of _that_ container can run on a Node, if say, a VM has a memory of 1GB & the container has a max required memory of 256mB, then `kubectl` when asked to scale, can deploy up to 4 instances of that container in that VM (Node) - And if `kubectl` has to scale further (create more replicas) it will use other Nodes, if there are available, in the Cluster
   - By scaling out you're not incurring additional costs, because your Cluster configuration hasn't changed (unless you decided to change the Primary Node Pool, or add more Node Pools) & you're still managing the same amount of resources, you're just \_making better use" of the Cluster (resources) you've configured - You only pay for the virtual machines instances, storage, & networking resources consumed by your K8s cluster, _not Pods that are running on the VMs_
 - Azure Container Instances (ACI) - Much easier & quicker to run containers than AKS because you don't have to configure hardware, use `kubectl`, orchestrate, etc. - By running your workloads in ACI, you can focus on designing & building your applications instead of managing the infrastructure that runs them - You can pull container images from ACR (Azure Container Registry, akin to AWS ECR) or Docker Hub, & you can pick your VM size (CPU cores (1-4) & Memory (0.5 to 16GBs)) - You can also give the container a Fully Qualified Domain Name under "DNS name label" - You can also decide what ports you want open - ACI containers can be burstable (for scaling) from AKS - ACI is good for small apps you don't really need scaling for, e.g., personal pages, prototypes, demos, etc.
+- By default, AKS clusters use kubenet, and a virtual network and subnet are created for you. With kubenet, _nodes get an IP address from a virtual network subnet._ Network address translation (NAT) is then configured on the nodes, and _pods receive an IP address "hidden" behind the node IP._ This approach reduces the number of IP addresses that you need to reserve in your network space for pods to use. 
+  - But with Azure Container Networking Interface (CNI), _every pod gets an IP address from the subnet and can be accessed directly._
 
 ### Manage Virtual Networking
 
@@ -231,6 +251,8 @@
 - Virtual Private Network (VPN) - Allows you to join an external machine/network to an Azure network - Private connection, so there is end-to-end encryption of traffic - Able to access systems bu their private IP address (that have them) - 3 options in Azure: Point to Site (P2S) VPN, Site to Site (S2S) VPN, & Express Route - Both P2S & S2S VPN traffic travel over the public internet but in an encrypted form - S2S requires a physical VPN gateway on your side
   - Before Azure accepts a P2S VPN connection, the user has to be authenticated first. There are two mechanisms that Azure offers to authenticate a connecting user:
     - When using the native Azure certificate authentication, a client certificate that is present on the device is used to authenticate the connecting user.
+      - Certificates are used by Azure to authenticate clients connecting to a VNet over a Point-to-Site VPN connection. Once you obtain a root certificate, you upload the public key information to Azure. The root certificate is then considered 'trusted' by Azure for connection over P2S to the virtual network. You also generate client certificates from the trusted root certificate, and then install them on each client computer. The client certificate is used to authenticate the client when it initiates a connection to the VNet.
+      - You can _either generate a unique certificate for each client, or you can use the same certificate for multiple clients._ The advantage to generating unique client certificates is the ability to revoke a single certificate. Otherwise, if multiple clients use the same client certificate to authenticate and you revoke it, you'll need to generate and install new certificates for every client that uses that certificate.
     - Azure AD authentication allows users to connect to Azure using their Azure Active Directory credentials.
   - ![VPN](VPN.png)
 - ExpressRoute is a _private connection_ (traffic does not travel over the public internet) to Azure - Extremely fast & also expensive - Can only be set up with help of the communications provider (ISP) (you need high speed fiber-optic connection) - The "Premium Add-On" allows ExpressRoute to connect to VNets all over the world & not just your local region, & also expands the number of VNets you can connect to from 10 to a number that depends on bandwidth (10 GBps of bandwidth gets you 100 VNet connections) - Pricing for the metered version consists of ISP charges (can go up to $5k for 10 GBps), ExpressRoute charges, & Outbound traffic charges (both to Azure)
@@ -247,11 +269,19 @@
 ### Implement & manage virtual networking
 
 - ✔️ Mar 3
-- VNet Peering - By default a VM (or any other VNet-linked resource) in 1 VNet _cannot communicate with a VM in another VNet_, unless you set up Peering - You can set bi-directional traffic or uni-directional traffic (can set this also for forwarded traffic (or not allow at all), e.g., traffic from _another_ VNet going through the VNet to get to **another** VNet [VNet A -> VNet B -> VNet C]) - Peering relationships will be deployed to both VNets
-- Global Peering - Allow traffic between VNets that are _not_ in the same region
-- VNets are free of charge, every Subscription is allowed to create up to 50 VNets across all regions - Public IP addresses, & reserved IP addresses used on services inside a VNet, are charged - Network appliances such as VPN Gateway & Application Gateway that are run inside a VNet are also charged - Peering within the same Region is charged for inbound & outbound data transfer, & global peering is obviously more expensive, but by how much depends on the Zone the Region for inbound & outbound data transfer falls in
-- Azure-to-Azure Virtual Network Gateway - Software VPN device for your Azure VNet, use this with a connection to set up a site-to-site VPN connection between an Azure VNet & your local network, or a VNet-to-VNet VPN connection between 2 Azure VNets (guess this is an alternative to Peering, can be local or global) - You can install Virtual Network Gateways in _Gateway subnets_ - Azure will charge for the VPN gateway that connects to on-premises & other VNets in Azure, the charge is based on the amount of time that gateway is provisioned & available (_different from Peering in that inbound traffic is free for Inter-VNet [i.e., data going into Azure data centers between 2 VNets]_)
-- Adding a Network Gateway Connection - You need to manually set up the connection after the Gateways have been created, go to "Connections" & decide on the Connection type (e.g., VNet-to-VNet), First virtual network gateway (e.g., `vnetgateway`), Second virtual network gateway (e.g., `vnetgatewayjapan`), Shared key (used to establish encryption for the connection)
+- Peering / VNet-to-VNet VPN connections
+- Peering
+  - VNet Peering - By default a VM (or any other VNet-linked resource) in 1 VNet _cannot communicate with a VM in another VNet_, unless you set up Peering - You can set bi-directional traffic or uni-directional traffic (can set this also for forwarded traffic (or not allow at all), e.g., traffic from _another_ VNet going through the VNet to get to **another** VNet [VNet A -> VNet B -> VNet C]) - Peering relationships will be deployed to both VNets
+  - Global Peering - Allow traffic between VNets that are _not_ in the same region
+  - VNets are free of charge, every Subscription is allowed to create up to 50 VNets across all regions - Public IP addresses, & reserved IP addresses used on services inside a VNet, are charged - Network appliances such as VPN Gateway & Application Gateway that are run inside a VNet are also charged - Peering within the same Region is charged for inbound & outbound data transfer, & global peering is obviously more expensive, but by how much depends on the Zone the Region for inbound & outbound data transfer falls in
+- VNet-to-VNet VPN connections
+  - Azure-to-Azure Virtual Network Gateway - Software VPN device for your Azure VNet, use this with a connection to set up a site-to-site VPN connection between an Azure VNet & your local network, or a VNet-to-VNet VPN connection between 2 Azure VNets 
+    - Alternative to Peering, can be local or global also
+  - To create a VNet-to-VNet VPN between 2 VNets you _must have a Gateway subnet_
+    - The virtual network gateway uses specific subnet called the gateway subnet. The gateway subnet is part of the virtual network IP address range that you specify when configuring your virtual network. It contains the IP addresses that the virtual network gateway resources and services use.
+    - When you create the gateway subnet, you specify the number of IP addresses that the subnet contains. The number of IP addresses needed depends on the VPN gateway configuration that you want to create. Some configurations require more IP addresses than others. We recommend that you create a gateway subnet that uses a _/27 or /28._
+  - Azure will charge for the VPN gateway that connects to on-premises & other VNets in Azure, the charge is based on the amount of time that gateway is provisioned & available (_different from Peering in that inbound traffic is free for Inter-VNet [i.e., data going into Azure data centers between 2 VNets]_)
+  - Adding a Network Gateway Connection - You need to manually set up the connection after the Gateways have been created, go to "Connections" & decide on the Connection type (e.g., VNet-to-VNet), First virtual network gateway (e.g., `vnetgateway`), Second virtual network gateway (e.g., `vnetgatewayjapan`), Shared key (used to establish encryption for the connection)
 - Advantage of using a Virtual Network Gateway over Peering: _Scalable_ & _VNet Gateway is the way to **encrypt** the traffic between 2 networks_
 - Which of the following needs to be setup in Azure for the Site-to-Site VPN connection? _A gateway subnet_
 
@@ -274,6 +304,7 @@
 - NSGs (Network Security Groups) - Allows us to specify which type of traffic is allowed/denied - NSGs can be attached to _VMs' Network interfaces or to the Subnet that encompasses them_ - Important to note that by default when creating a new VM, Azure will create a NSG for you & assign it to the VM, also by default this Azure-created NSG has a number of Inbound/Outbound security rules - When adding rules you can declare source IP addresses/CIDR ranges, destination port ranges, protocol, action (allow/deny), priority (the lower the number the higher the priority), etc.
   - ![defaultNSGRules](defaultNSGRules.png)
   - For Outbound it's similar, just replace "In" with "Out" above, & the "AllowAzureLoadBalancer..." with _"AllowInternet..."_
+  - You _cannot delete the default rules_
 - Implement Effective NSG Rules - Best practice to not have so many NSGs, & _create role-based NSGs_, e.g., have NSGs not for each VM (get rid of the Azure-created NSGs, & associate your custom NSGs to the VMs' Network interfaces) but for things like `HTTPS_Traffic` (for front-end servers) & `RDP_Traffic`
 - If no rules other then the default NSG rules are in place, are VM's on SubnetA & SubnetB be able to connect to the Internet? _Yes, the Outbound rules contains a Rule with the Name of “AllowInternetOutBound”. This would allow all Outbound traffic to the Internet._
 - A network security group can have multiple network interfaces assigned to it. So you can assign a single NSG to multiple VMs
