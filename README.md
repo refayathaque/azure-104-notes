@@ -44,7 +44,7 @@
   - The destination RG **must not have any existing App Service resources**, App Service resources include:
     - Web Apps / App Service plans / Uploaded or imported TLS/SSL certifications / App Service Environments
   - All App Service resources in the RG must be **moved together**
-  - You can move an app to another App Service Plan, \_as long as the source plan & the target plan are in the **same RG & region\_**
+- You can move an app to another App Service Plan, \_as long as the source plan & the target plan are in the **same RG & region\_**
 - For certain resources, like storage accounts, you must declare a RG at creation
 - You can assign policies to RGs, e.g., only allow resources creation in RG to certain regions
 - You can move resources to other RGs, other subscriptions or other regions (_You can put a RG is any region, & you can put resources from any region within this resource group_)
@@ -162,7 +162,7 @@
 - Azure Backup - Can be set up in Backup & Site Recovery (OMS) by creating a Recovery Services Vault (needs specific Subscription, RG & Location/Region, the Location _must be the same as the resources you are backing up_) - You can back up on-premise resources as well - As of now you can back up an Azure VM, File Share or SQL Server in Azure VM - The Backup policy will allow you to choose a schedule & how long to keep backups for
 - To backup any resource in Azure, the first thing you need to do is to create a Recovery Services vault (RSV)
   - To protect _any_ (e.g., storage accounts, VMs, databases, etc.) data source the RSV **must be in the same region**
-  - RSVs can only backup file shares, **not blobs/blob containers**, when working with Storage accounts
+  - RSVs can only backup file shares, **not blob data**, when working with Storage accounts
 - File Recovery from a VM Backup - Select a recovery point & download the executable, which is a script that will mount the disks (will remain mounted for 12 hours) from the selected recovery point as local drives on the machine where it is run
   - If you want to restore the backup of one VM to _another_ VM in a different region but under the same RG, you need to install the Microsoft Azure Recovery Services Agent on that VM
   - As one of the restore options, you can replace an existing VM disk with the selected restore point.
@@ -504,16 +504,16 @@
 - Network Watcher - _Regional_ service that enables you to monitor & diagnose conditions at the network scenario level - You need to enable it for your specific region
   - **Use case:** You can verify rules set up in NSGs by performing the "IP flow verify", where you can simulate traffic in & out of a VM & see if the remote/local IP/port combination is being allowed to flow
   - IP flow verify
-    - Useful in confirming if a rule in a NSG is blocking ingress or egress traffic to or from a VM
+    - Useful in confirming if a _rule in a NSG is blocking ingress or egress traffic_ to or from a VM
     - Helps administrators quickly diagnose connectivity issues from or to the internet & from or to the on-premises environment
   - Variable packet capture
-    - Allows you to create packet capture sessions to track traffic to & from a VM - Useful if there is a requirement to inspect all network traffic between VMs for a specific duration
-    - Uses include gathering network statistics, gaining information on network intrusions, to debug client-server communications, & more
+    - Allows you to create packet capture sessions to _track traffic to & from a VM_ - Useful if there is a requirement to inspect all network traffic between VMs for a specific duration
+    - Uses include _gathering network statistics, gaining information on network intrusions, to debug client-server communications_, & more
   - Connection monitor
     - Use case: Find out if there is outbound connectivity between an Azure VM & an external host
-    - Checks that connections work between Azure resources. Use this tool to check that 2 VMs can communicate if you want them to. Also measures latency between the resources
+    - Checks that _connections work between Azure resources._ Use this tool to check that 2 VMs can communicate if you want them to. Also measures latency between the resources
 - The necessary peering connections have been created between vnetwork1 & vnetwork2. The firewalls on the virtual machines have been modified to allow ICMP traffic. But traffic does not seem to flow between the virtual machines when the ping request is made. Which of the following can be used to diagnose the issue? _The issue could be due to the security groups. You can diagnose the issue using IP Flow Verify._
-- To analyze traffic, you need to have an existing network watcher, or enable a network watcher in each region that you have NSGs that you want to analyze traffic for.
+- To analyze traffic, you need to have an existing Network Watcher, or enable a Network Watcher in each region that you have NSGs that you want to analyze traffic for.
   - If you want it to record all the successful & failed connection attempts to a VM, do these things:
     - Register the _Microsoft.Insights_ resource provider
     - Create a storage account
