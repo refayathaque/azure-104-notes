@@ -57,7 +57,7 @@
   - Tenants need not have subscriptions (meaning they can't create resources) - Tenants can have more than 1 Subscription
 - Subscription - Agreement with Microsoft to use Azure services, & how you're going to pay - All Azure resource usage gets billed to the payment method of the subscription - Free, pay as you go, enterprise agreements
   - You can move Azure resources (e.g., VMs) across subscriptions using the `Move-AzResource` Powershell command.
-    - You can also move a VM and its associated resources to a different subscription by using the Azure portal.
+    - You can also move a VM & its associated resources to a different subscription by using the Azure portal.
     - When moving VMs you also have to move it's associated resources
     - `Move-AzResource -DestinationSubscriptionId "<myDestinationSubscriptionID>" -DestinationResourceGroupName "<myDestinationResourceGroup>" -ResourceId <myResourceId,myResourceId,myResourceId>`
 - Accounts are basically assigned roles within Tenants so there can be more than 1 Account as an owner (i.e., admin) in a Tenant - Grant other Accounts to be part of the Tenant
@@ -66,7 +66,7 @@
 - Resource Group (RG) - Way of organizing resources in a subscription - _All resources must belong to only 1 RG_ - Good way to separate out projects & isolate resources by project - Deleting RG deletes all resources inside
 - Role assignments - E.g., (from highest access to lowest) - Owner: allows you to grant permissions to other people - Contributor: can CRUD resources they have permissions for - Reader: read only
 - Policy - Define to enforce company standards & SLAs - E.g., (built-in policies) enforce tag & its value, allowed locations, allowed VM SKUs (Stock Keeping Unit), not allowed resource types, etc. - Policy scope - Can be set at subscription level or RG
-  - Common use cases for Azure Policy include implementing governance for resource consistency (e.g., allowed VM SKUs), regulatory compliance, security, cost, and management
+  - Common use cases for Azure Policy include implementing governance for resource consistency (e.g., allowed VM SKUs), regulatory compliance, security, cost, & management
 - E.g., Subscriptions help you know which customer/client should be billed for a resource/RG if you're a digital consultancy firm servicing multiple clients
 - Management Groups - Helps you manage access, policy, & compliance by grouping multiple Subscriptions together - E.g., you can assign Users to Management Groups if, e.g., you need a User to have access to multiple Subscriptions being covered in that Management Group
 - At the lowest level you have a User (Account), & that User is part of a Tenant in AD, that Tenant has Subscriptions, & Subscriptions can get organized into Management Groups
@@ -107,15 +107,17 @@
 - All Access Tiers from most expensive to least (storage-wise): Premium (8x more expensive compared to Hot for storage, but 1/3 of Hot for read/write operations), Hot, Cool, Archive
 - Lifecycle Management: Use policies to transition your data to the appropriate access tiers or expire (delete) at the end of the data's lifecycle
 - Object Replication: When enabled, blobs are copied asynchronously from a source storage account to a destination account - You can set up replication rules where you declare the source container & the destination container, filters (add prefix match), & what exactly you want to copy over (e.g., only new object/all files/etc.)
-- Only the General Purpose V2 & Blob storage account types support the Archive access tier
 - Blob Storage account can be used to make all sorts of files publically accessible, like images/documents/static website files - But using a CDN is a more optimized way of serving these static files to users around the world (using caching) - CDN is a global resource & does not live in any region - 4 pricing tiers, with the cheapest 1 being the Microsoft 1, & the most expensive being the Premium Verizon (there is also a Standard Akamai in the middle) - Tiers vary by what benefits they offer
 - CDN (Content Delivery Network) - allows you to improve performance by removing the burden of serving static, unchanging files from the main server to a network of servers around the globe; a CDN can reduce traffic to a server by 50% or more, which means you can serve more users or serve the same users faster
 - If you need to only allow connections to the storage account from specific IP addresses/ranges you can configure that under "Firewalls & virtual networks"
   - When network rules are configured, only applications requesting data over the specified set of networks or through the specified set of Azure resources can access a storage account. You can limit access to your storage account to requests originating from specified IP addresses, IP ranges, subnets in an Azure Virtual Network (VNet), or resource instances of some Azure services.
 - If a storage account needs to be access from a VNet hosting VMs then you need to _enable & create a service endpoint & configure network access to the storage account_
-- Azure Storage Explorer: _Upload, download, and manage Azure blobs, files, queues, and tables, as well as Azure Cosmos DB and Azure Data Lake Storage entities. Easily access virtual machine disks, and work with either Azure Resource Manager or classic storage accounts. Manage and configure cross-origin resource sharing rules._
-- Types of storage accounts and their capabilities:
+- Azure Storage Explorer: _Upload, download, & manage Azure blobs, files, queues, & tables, as well as Azure Cosmos DB & Azure Data Lake Storage entities. Easily access virtual machine disks, & work with either Azure Resource Manager or classic storage accounts. Manage & configure cross-origin resource sharing rules._
+- Types of storage accounts & their capabilities:
   - ![Storage Account Types](storageAccountTypes.png)
+    - All 3 access tiers (hot, cool, archive) - _Blob storage & GPV2_
+    - GRS - _Blob storage, GPV1 & GPV2_
+    - ZRS - _Block Blob storage, File Storage & GPV2_
 
 ### Import & export data to Azure
 
@@ -123,11 +125,15 @@
 - Use Import/export jobs to move large amounts of data into/out of Storage Accounts - For exports Azure will actually ship you a hard drive with all your data - For imports you have to send in your hard drive
 - Used to securely import large amounts of data to _Azure Blob storage & Azure Files_ by shipping disk drives to an Azure datacenter. This service can also be used to transfer data from Azure Blob storage to disk drives & ship to your on-premises sites. Data from one or more disk drives can be imported _either to Azure Blob storage or Azure Files_
   - ![Import Export Storage Types](importExportStorageTypes.png)
+    - Export - _Blob storage only_
+    - Import - _Blob storage & File storage_
 
 ### Configure Azure files
 
 - ✔️ Feb 28
-- Azure Files is part of regular Storage Accounts, unlike Blobs, Files can be accessed as drives from your own computer (over port 445) or can be mounted to VMs to be accessed through their own operating systems - A use case can be giving access to a File Share (the container where Files are stored in Azure Files) several VMs for all developers to store certain files in a centralized location
+- Azure Files is part of regular Storage Accounts, unlike Blobs, Files can be accessed as drives from your own computer (__over port 445__) or can be mounted to VMs to be accessed through their own operating systems 
+  - A use case can be giving access of a File Share (the container where Files are stored in Azure Files) to several VMs for multiple developers to store certain files in a centralized location
+  - _To access files from home computers, users have to use SMB protocol that expects port 445 to be open_
 - _Azure File Sync_ replicates files from your on-premises Windows Server to an Azure file share, enabling you to centralize your file services in Azure while maintaining local access to your data - Install Azure File Sync Agent to your server & set the File Share container for sync to be established - Azure File Sync service is used as a file distribution service
   - Steps to set up as per documentation:
     - Prepare Windows Server to use with Azure File Sync
@@ -148,6 +154,8 @@
   - RSVs can only backup file shares, **not blobs/blob containers**, when working with Storage accounts
 - File Recovery from a VM Backup - Select a recovery point & download the executable, which is a script that will mount the disks (will remain mounted for 12 hours) from the selected recovery point as local drives on the machine where it is run
   - If you want to restore the backup of one VM to _another_ VM in a different region but under the same RG, you need to install the Microsoft Azure Recovery Services Agent on that VM
+  - As one of the restore options, you can replace an existing VM disk with the selected restore point.
+    - But for you to be able to do this the VM has to be in the Stopped or Deallocated state, only this way can you replae the VM's existing disks
 - On-Premises Backup - Install Recovery Services agent, download the vault credentials to register the server to the vault, then schedule backups using Recovery Services agent UI (this method is for just backing up files & folders) - If you want the backup to be Bare Metal Recovery or of a Microsoft SQL Server (there are other options too), you need to install the Microsoft Azure Backup Server
 - Backup Reports - Turn on Diagnostics first & choose how to store logs & what to log, you also need to select a storage account - Backup Reports will use Power BI for you to view report dashboards, download reports & create custom reports
 - Soft Delete for VM Backups - A soft delete is when you delete something but it doesn't actually get deleted right away, there is a delay, & this allows you to change your mind - This is a security feature in case someone hacks into your account & starts deleting your backups - Enabled by default on new RSV, you get _14 days to delete back up data, can be un-deleted during this 14-day window, but on the 15th day it will auto-delete_
@@ -161,8 +169,11 @@
 - Create a VM - You'll need to select the Subscription, RG first, then decide on the name, Region (influences pricing differently), Image, Availability options, Inbound port rules (80 & 443 for Web traffic, 22 for SSH, 3389 for RDP), VNet, Subnet, SG, etc. - Spot instance: Getting a VM at a much cheaper price but run the risk of getting evicted at any time (good for low priority tasks)
 - Connect to a VM - Using RDP (use administrator credentials you created when configuring the VM), SSH (using private key) or Bastion (if configured)
 - VM Availability - Options will vary by Region, & this must be set during VM creation, you can't change Availability options later on
-  - Availability Set: Logical grouping capability for isolating VM resources from each other when they're deployed. Azure makes sure that the VMs you place within an Availability Set run across multiple physical servers, compute racks, storage units, & network switches. If a hardware or software failure happens, only a subset of your VMs are impacted & your overall solution stays operational. (Only works for 2 or more VMs) _99.95%_ availability
-  - Availability Zone (AZ): Expand the level of control you have to maintain the availability of the applications & data on your VMs. An AZ is a physically separate zone, within an Azure region. There are 3 Availability Zones per supported Azure region. Each AZ has a distinct power source, network, & cooling. By architecting your solutions to use replicated VMs in zones, you can _protect your apps & data from the loss of a data center. If 1 zone is compromised, then replicated apps & data are instantly available in another zone. 99.99% availability_
+  - Availability Set: Logical grouping capability for isolating VM resources from each other when they're deployed. Azure makes sure that the VMs you place within an Availability Set run across multiple physical servers, compute racks, storage units, & network switches. If a hardware or software failure happens, only a subset of your VMs are impacted & your overall solution stays operational. (Only works for 2 or more VMs) 
+    - __99.95%__ availability
+  - Availability Zone (AZ): Expand the level of control you have to maintain the availability of the applications & data on your VMs. An AZ is a physically separate zone, within an Azure region. There are 3 Availability Zones per supported Azure region. Each AZ has a distinct power source, network, & cooling. 
+  - By architecting your solutions to use replicated VMs in zones, you can _protect your apps & data from the loss of a data center. If 1 zone is compromised, then replicated apps & data are instantly available in another zone. 
+    - __99.99% availability__
   - Azure managed disks are block-level storage volumes that are managed by Azure & used with Azure Virtual Machines. Managed disks are designed for _99.999% availability_. Managed disks achieve this by providing you with 3 replicas of your data, allowing for high durability.
     - Managed disks provide better reliability for Availability Sets by ensuring that the disks of VMs in an Availability Set are sufficiently isolated from each other to avoid single points of failure.
 - There are 3 situations that can adversely impact VMs on Azure, they are: _Unplanned hardware maintenance events_, _Unexpected downtime_, & _Planned maintenance events_
@@ -198,7 +209,6 @@
   - The subnet must be **at least /27 or larger**.
 - Virtual Machine Scale Sets (VMSS or just "Scale Sets") - Akin to AWS ASG - Grow & shrink (scaling) your resource usage depending on your actual needs - Create & manage a group of identical, load balanced VMs. The number of VM instances can automatically increase or decrease in response to demand or a defined schedule - Provides high availability & app resiliency - Allows your app to automatically scale as resource demand changes - You can set a custom scaling policy that'll allow you to set the CPU threshold %s & how many VMs to increase/decrease by, the max/min number of VMs, etc. - What is the maximum number of virtual machines that a virtual machine scale set can support? _1000_
   - VMSS is a free service, therefore, it does not have a financially backed SLA
-    - Managed Disks also do not have a financially backed SLA
 - _You cannot have VMs that are not in VNets_
 - _A network interface (NIC) is the interconnection between a VM & a virtual network (VNet). A VM must have at least one NIC, but can have more than one_, depending on the size of the VM you create.
   - You can only assign a NIC to a VNet that exists in the _same subscription & location_
@@ -282,8 +292,12 @@
       - You can _either generate a unique certificate for each client, or you can use the same certificate for multiple clients._ The advantage to generating unique client certificates is the ability to revoke a single certificate. Otherwise, if multiple clients use the same client certificate to authenticate & you revoke it, you'll need to generate & install new certificates for every client that uses that certificate.
     - Azure AD authentication allows users to connect to Azure using their Azure Active Directory credentials.
   - ![VPN](VPN.png)
-- ExpressRoute is a _private connection_ (traffic does not travel over the public internet) to Azure - Extremely fast & also expensive - Can only be set up with help of the communications provider (ISP) (you need high speed fiber-optic connection) - The "Premium Add-On" allows ExpressRoute to connect to VNets all over the world & not just your local region, & also expands the number of VNets you can connect to from 10 to a number that depends on bandwidth (10 GBps of bandwidth gets you 100 VNet connections) - Pricing for the metered version consists of ISP charges (can go up to $5k for 10 GBps), ExpressRoute charges, & Outbound traffic charges (both to Azure)
-- ExpressRoute Direct - Provisioned directly through Microsoft (ISP not required), connect directly to the global Microsoft backbone (currently there are 150 Edge locations around the world) if you're close to the Edge locations - _Even higher speeds than regular ExpressRoute_, 10 GBps & 100 GBps - Optionally, you can have multiple virtual circuits on 1 connection, e.g., if you have the 10GBps option, you can provision 1 5GBps circuit & 2 2.5GBps circuits, this allows you to provide networks their own circuits - Needed when you have massive data ingestion requirements - For these immense transfer speeds you must have an internal network (hardware) that supports these speeds
+  - _If the VPN device that you want to connect to has changed its public IP address_
+    - You need to _modify the local network gateway to reflect that change_, & _if a gateway connection already , you first need to remove the connection_
+      - After the connection is removed, you can _modify the gateway IP address & recreate a new connection_
+    - When modifying the gateway IP address, you don't need to delete the VPN gateway. _You only need to remove the connection_
+  - ExpressRoute is a _private connection_ (traffic does not travel over the public internet) to Azure - Extremely fast & also expensive - Can only be set up with help of the communications provider (ISP) (you need high speed fiber-optic connection) - The "Premium Add-On" allows ExpressRoute to connect to VNets all over the world & not just your local region, & also expands the number of VNets you can connect to from 10 to a number that depends on bandwidth (10 GBps of bandwidth gets you 100 VNet connections) - Pricing for the metered version consists of ISP charges (can go up to $5k for 10 GBps), ExpressRoute charges, & Outbound traffic charges (both to Azure)
+  - ExpressRoute Direct - Provisioned directly through Microsoft (ISP not required), connect directly to the global Microsoft backbone (currently there are 150 Edge locations around the world) if you're close to the Edge locations - _Even higher speeds than regular ExpressRoute_, 10 GBps & 100 GBps - Optionally, you can have multiple virtual circuits on 1 connection, e.g., if you have the 10GBps option, you can provision 1 5GBps circuit & 2 2.5GBps circuits, this allows you to provide networks their own circuits - Needed when you have massive data ingestion requirements - For these immense transfer speeds you must have an internal network (hardware) that supports these speeds
 - Create Azure Firewall - Protects your VNet resources, fully stateful firewall as a service with built-in high availability & unrestricted cloud scalability, uses a static public IP address for your VNet resources allowing outside firewalls to identify traffic originating from your VNet - When creating the Firewall you'll need to provide a VNet, it's Address space, & the Address space of a dedicated Subnet for the Firewall (this is required & Firewall will automatically create 1), & you'll also have to provide a Public IP address - Forced tunneling is an option you can enable, if enabled, an additional Subnet is created for Firewall management traffic (basically all your traffic will go through this _additional_ Subnet) & this Subnet will have direct access to the internet
 - Configure Azure Firewall - 1st step is to create a Route Table (required to tell Azure how to direct Firewall traffic), then associate the Subnet of the VM you want to protect using the Firewall, then create the Route itself with the Address prefix allowing all traffic (0.0.0.0/0) & set the "Next hop type" to "Virtual appliance" (for Firewall) & the "Next hop address" to the _private IP_ Address of the Firewall - Now, any traffic that is being sent to the VM's Subnet will be sent first to the Firewall
   - Now set a Rule in the Firewall itself - Add an Application rule by setting the Priority (the lower the number the higher the priority, inverse relation), Action & then set the Rules - You'll need to add the VM's Subnet Address space under Target FQDNs, the Protocol:Port, & a FQDN (this will be that of the website this VM can/cannot access depending on the Action)
@@ -301,6 +315,7 @@
   - VNet Peering - By default a VM (or any other VNet-linked resource) in 1 VNet _cannot communicate with a VM in another VNet_, unless you set up Peering - You can set bi-directional traffic or uni-directional traffic (can set this also for forwarded traffic (or not allow at all), e.g., traffic from _another_ VNet going through the VNet to get to **another** VNet [VNet A -> VNet B -> VNet C]) - Peering relationships will be deployed to both VNets
   - Global Peering - Allow traffic between VNets that are _not_ in the same region
   - VNets are free of charge, every Subscription is allowed to create up to 50 VNets across all regions - Public IP addresses, & reserved IP addresses used on services inside a VNet, are charged - Network appliances such as VPN Gateway & Application Gateway that are run inside a VNet are also charged - Peering within the same Region is charged for inbound & outbound data transfer, & global peering is obviously more expensive, but by how much depends on the Zone the Region for inbound & outbound data transfer falls in
+  - ![Peering](peering.png)
 - VNet-to-VNet VPN connections
   - Azure-to-Azure Virtual Network Gateway - Software VPN device for your Azure VNet, use this with a connection to set up a site-to-site VPN connection between an Azure VNet & your local network, or a VNet-to-VNet VPN connection between 2 Azure VNets
     - Alternative to Peering, can be local or global also
@@ -432,7 +447,7 @@
   - Add a Load balancing rule to hook up all the above mentioned configuration items (& things like Protocol, Port, Backend Port, Frontend IP address, etc.) & get the LB up & running
   - _Standard LB, serving 2 or more Healthy VMs, will be available 99.99% of the time_, Basic LB is _excluded_ from this SLA
 - Session / Client IP affinity
-  - E.g., a company has set up a Load balancer that load balances on port 80 and 443 across 3 VMs, and you have to ensure that the same web server services all clients for each request
+  - E.g., a company has set up a Load balancer that load balances on port 80 & 443 across 3 VMs, & you have to ensure that the same web server services all clients for each request
   - By using source IP affinity, connections that are started from the same client computer go tot he same datacenter endpoint
 - Can have single LB managing traffic for more than 1 app - Since it's possible to create more than 1 public IP on an LB - Would also need to create a new Load balancing rule, this time you would provide a different IP address under "Frontend IP address" - Under _Backend port_, you would set this to something different (if your first rule had 80, then this can have 8080) - Now you can serve _a different app_ running on your VMs using this LB - If you do this your should also set up another Health probe that checks on the new port [e.g, 8080])
 - _Inbound NAT Rule - Under "Settings" - Forwards incoming traffic to a selected IP address & port combination to a specific VM_ (instead of _all_, if in your Backend pools you have Availability Set or VMSS set)
@@ -458,10 +473,13 @@
   - **Use case:** You can verify rules set up in NSGs by performing the "IP flow verify", where you can simulate traffic in & out of a VM & see if the remote/local IP/port combination is being allowed to flow
   - IP flow verify
     - Useful in confirming if a rule in a NSG is blocking ingress or egress traffic to or from a VM
-    - Helps administrators quickly diagnose connectivity issues from or to the internet and from or to the on-premises environment
+    - Helps administrators quickly diagnose connectivity issues from or to the internet & from or to the on-premises environment
   - Variable packet capture
-    - Allows you to create packet capture sessions to track traffic to and from a VM - Useful if there is a requirement to inspect all network traffic between VMs for a specific duration
-    - Uses include gathering network statistics, gaining information on network intrusions, to debug client-server communications, and more
+    - Allows you to create packet capture sessions to track traffic to & from a VM - Useful if there is a requirement to inspect all network traffic between VMs for a specific duration
+    - Uses include gathering network statistics, gaining information on network intrusions, to debug client-server communications, & more
+  - Connection monitor
+    - Use case: Find out if there is outbound connectivity between an Azure VM & an external host
+    - Checks that connections work between Azure resources. Use this tool to check that two VMs can communicate if you want them to. Also measures latency between the resources
 - The necessary peering connections have been created between vnetwork1 & vnetwork2. The firewalls on the virtual machines have been modified to allow ICMP traffic. But traffic does not seem to flow between the virtual machines when the ping request is made. Which of the following can be used to diagnose the issue? _The issue could be due to the security groups. You can diagnose the issue using IP Flow Verify._
 - To analyze traffic, you need to have an existing network watcher, or enable a network watcher in each region that you have NSGs that you want to analyze traffic for.
   - If you want it to record all the successful & failed connection attempts to a VM, do these things:
