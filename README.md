@@ -34,19 +34,20 @@
 - ✔️ Feb 27
 - ARM (Azure Resource Manager) for Resource Groups (RG) - Organization structure for Azure resources, makes it easy to group resources for testing/projects/etc. - All resources within the RG will be deleted if the RG is deleted
 - Locks prevent the content of the RG from changing - E.g., a read-only lock won't allow you to even stop a VM in a RG
-  - As an administrator, you can lock a subscription, resource group, or resource to prevent other users in your organization from accidentally deleting or modifying critical resources. _The lock overrides any permissions the user might have._
+  - As an administrator, you can lock a subscription, RG, or resource to prevent other users in your organization from accidentally deleting or modifying critical resources. _The lock overrides any permissions the user might have._
     - You can set the lock level to CanNotDelete or ReadOnly. In the portal, the locks are called **Delete & Read-only** respectively.
       - CanNotDelete means authorized users can still read & modify a resource, but they can't delete the resource.
         - While you can't delete the RG's resources if it has this lock, you _can move resources **into** it_
       - ReadOnly means authorized users can read a resource, but they can't delete or update the resource. Applying this lock is similar to restricting all authorized users to the permissions granted by the Reader role.
         - While you can't modify or delete the RG's resources if it has this lock, you _can move resources **into** it_
-- There are specific requirements \_for moving App Service resources to a **new subscription\_**
+- There are specific requirements _for moving App Service resources to a **new subscription**_
   - The destination RG **must not have any existing App Service resources**, App Service resources include:
     - Web Apps / App Service plans / Uploaded or imported TLS/SSL certifications / App Service Environments
   - All App Service resources in the RG must be **moved together**
-- For certain resources, like storage accounts, you must declare a resource group at creation
+- For certain resources, like storage accounts, you must declare a RG at creation
 - You can assign policies to RGs, e.g., only allow resources creation in RG to certain regions
 - You can move resources to other RGs, other subscriptions or other regions (_You can put a RG is any region, & you can put resources from any region within this resource group_)
+- To view ARM deployment templates, go to "Deployments" in the RG section of the Portal
 
 ### Manage subscriptions & governance
 
@@ -55,12 +56,17 @@
 - Tenant - Representation of an organization/company - A dedicated instance of Azure AD - _Every Azure Account is part of at least 1 Tenant_ - Usually represented by a public domain name
   - Tenants need not have subscriptions (meaning they can't create resources) - Tenants can have more than 1 Subscription
 - Subscription - Agreement with Microsoft to use Azure services, & how you're going to pay - All Azure resource usage gets billed to the payment method of the subscription - Free, pay as you go, enterprise agreements
+  - You can move Azure resources (e.g., VMs) across subscriptions using the `Move-AzResource` Powershell command.
+    - You can also move a VM and its associated resources to a different subscription by using the Azure portal.
+    - When moving VMs you also have to move it's associated resources
+    - `Move-AzResource -DestinationSubscriptionId "<myDestinationSubscriptionID>" -DestinationResourceGroupName "<myDestinationResourceGroup>" -ResourceId <myResourceId,myResourceId,myResourceId>`
 - Accounts are basically assigned roles within Tenants so there can be more than 1 Account as an owner (i.e., admin) in a Tenant - Grant other Accounts to be part of the Tenant
 - Resource - Entity managed by Azure - E.g., VM, web app, storage account, & these "expected" resources often create "unexpected" resources like, public IP address, network interface card, network security group, etc.
 - Accounts can be given read, update, owner rights to resources
 - Resource Group (RG) - Way of organizing resources in a subscription - _All resources must belong to only 1 RG_ - Good way to separate out projects & isolate resources by project - Deleting RG deletes all resources inside
 - Role assignments - E.g., (from highest access to lowest) - Owner: allows you to grant permissions to other people - Contributor: can CRUD resources they have permissions for - Reader: read only
 - Policy - Define to enforce company standards & SLAs - E.g., (built-in policies) enforce tag & its value, allowed locations, allowed VM SKUs (Stock Keeping Unit), not allowed resource types, etc. - Policy scope - Can be set at subscription level or RG
+  - Common use cases for Azure Policy include implementing governance for resource consistency (e.g., allowed VM SKUs), regulatory compliance, security, cost, and management
 - E.g., Subscriptions help you know which customer/client should be billed for a resource/RG if you're a digital consultancy firm servicing multiple clients
 - Management Groups - Helps you manage access, policy, & compliance by grouping multiple Subscriptions together - E.g., you can assign Users to Management Groups if, e.g., you need a User to have access to multiple Subscriptions being covered in that Management Group
 - At the lowest level you have a User (Account), & that User is part of a Tenant in AD, that Tenant has Subscriptions, & Subscriptions can get organized into Management Groups
@@ -87,7 +93,7 @@
 - Costs will vary depending on the region, performance/access tier, replication, account kind (e.g., general purpose V2), etc.
 - Can be accessible only in VNets (hence within subnets as well) or be accessible to all networks - If you select VNet you won't be able to access yourself even in the portal, so you'll need to whitelist your IP address
 - Blob accounts live within Storage Accounts, & they have containers for objects (containers akin to S3 buckets)
-- Block blobs are fine for most use bases - Page blobs for partial updates - Append blobs for adding to a file
+- Block blobs are fine for most use cases - Page blobs for partial updates - Append blobs for adding to a file
 - Blob Storage (another kind of Storage Account kind, in addition to General Purpose V1 & V2) - Different from other kinds because _they only store Blobs_ - Can use to host public documents like images/documents/etc.
 - Use Access Keys to authenticate your apps when making requests to Azure Storage Accounts (you're provided with 2 keys) - Keys can be regenerated if compromised
 - SAS (Shared Access Signature): URI that grants restricted access rights to Azure Storage resources - Can set time limits, which storage resources can be accessed, IP addresses, protocol, & CRUD permissions - Use this when you don't want to provide Access Keys - Essentially a _token_
@@ -96,7 +102,7 @@
     - With GRS or GZRS, the _data in the secondary region isn't available for read or write access unless there is a failover to the secondary region._ For read access to the secondary region, configure your storage account to use read-access geo-redundant storage (RA-GRS) or read-access geo-zone-redundant storage (RA-GZRS).
 - You can set a failover, so in the e.g., above, you can set Canada East as the Primary for failover
 - If read-access geo-redundant replication chosen you'll have a secondary endpoint to access in case the primary is down (file service won't have a secondary endpoint for some reason)
-- RBAC (Role-Baed Access Control) Authentication for Storage - Use Role Assignments to give Apps/Users access to Storage Accounts - There are a lot of specific storage resource based Roles, they are all under "Storage \*"
+- RBAC (Role-Based Access Control) Authentication for Storage - Use Role Assignments to give Apps/Users access to Storage Accounts - There are a lot of specific storage resource based Roles, they are all under "Storage \*"
 - Access Tiers - Implication related to how much you're going to get charged for storage & access (2 distinct concepts) - Going for _"Cool" will halve your storage costs but double your access costs (paying twice for read/write) when compared to "Hot"_ - Can set on a per file basis too, e.g., you can set 1 file that you know will hard be used in a container to "Cool" while leaving others in the container to "Hot"
 - All Access Tiers from most expensive to least (storage-wise): Premium (8x more expensive compared to Hot for storage, but 1/3 of Hot for read/write operations), Hot, Cool, Archive
 - Lifecycle Management: Use policies to transition your data to the appropriate access tiers or expire (delete) at the end of the data's lifecycle
@@ -107,6 +113,9 @@
 - If you need to only allow connections to the storage account from specific IP addresses/ranges you can configure that under "Firewalls & virtual networks"
   - When network rules are configured, only applications requesting data over the specified set of networks or through the specified set of Azure resources can access a storage account. You can limit access to your storage account to requests originating from specified IP addresses, IP ranges, subnets in an Azure Virtual Network (VNet), or resource instances of some Azure services.
 - If a storage account needs to be access from a VNet hosting VMs then you need to _enable & create a service endpoint & configure network access to the storage account_
+- Azure Storage Explorer: _Upload, download, and manage Azure blobs, files, queues, and tables, as well as Azure Cosmos DB and Azure Data Lake Storage entities. Easily access virtual machine disks, and work with either Azure Resource Manager or classic storage accounts. Manage and configure cross-origin resource sharing rules._
+- Types of storage accounts and their capabilities:
+  - ![Storage Account Types](storageAccountTypes.png)
 
 ### Import & export data to Azure
 
@@ -119,7 +128,7 @@
 
 - ✔️ Feb 28
 - Azure Files is part of regular Storage Accounts, unlike Blobs, Files can be accessed as drives from your own computer (over port 445) or can be mounted to VMs to be accessed through their own operating systems - A use case can be giving access to a File Share (the container where Files are stored in Azure Files) several VMs for all developers to store certain files in a centralized location
-- Azure File Sync replicates files from your on-premises Windows Server to an Azure file share, enabling you to centralize your file services in Azure while maintaining local access to your data - Install Azure File Sync Agent to your server & set the File Share container for sync to be established - Azure File Sync service is used as a file distribution service
+- _Azure File Sync_ replicates files from your on-premises Windows Server to an Azure file share, enabling you to centralize your file services in Azure while maintaining local access to your data - Install Azure File Sync Agent to your server & set the File Share container for sync to be established - Azure File Sync service is used as a file distribution service
   - Steps to set up as per documentation:
     - Prepare Windows Server to use with Azure File Sync
     - Deploy the Storage Sync Service
@@ -154,7 +163,7 @@
 - VM Availability - Options will vary by Region, & this must be set during VM creation, you can't change Availability options later on
   - Availability Set: Logical grouping capability for isolating VM resources from each other when they're deployed. Azure makes sure that the VMs you place within an Availability Set run across multiple physical servers, compute racks, storage units, & network switches. If a hardware or software failure happens, only a subset of your VMs are impacted & your overall solution stays operational. (Only works for 2 or more VMs) _99.95%_ availability
   - Availability Zone (AZ): Expand the level of control you have to maintain the availability of the applications & data on your VMs. An AZ is a physically separate zone, within an Azure region. There are 3 Availability Zones per supported Azure region. Each AZ has a distinct power source, network, & cooling. By architecting your solutions to use replicated VMs in zones, you can _protect your apps & data from the loss of a data center. If 1 zone is compromised, then replicated apps & data are instantly available in another zone. 99.99% availability_
-  - Azure managed disks are block-level storage volumes that are managed by Azure & used with Azure Virtual Machines. Managed disks are designed for _99.999% availability_. Managed disks achieve this by providing you with three replicas of your data, allowing for high durability.
+  - Azure managed disks are block-level storage volumes that are managed by Azure & used with Azure Virtual Machines. Managed disks are designed for _99.999% availability_. Managed disks achieve this by providing you with 3 replicas of your data, allowing for high durability.
     - Managed disks provide better reliability for Availability Sets by ensuring that the disks of VMs in an Availability Set are sufficiently isolated from each other to avoid single points of failure.
 - There are 3 situations that can adversely impact VMs on Azure, they are: _Unplanned hardware maintenance events_, _Unexpected downtime_, & _Planned maintenance events_
   - Unplanned hardware maintenance events occurs when the Azure platform evaluated that hardware or a component associated with a physical machine is in a failure condition. When this event occurs, Azure issues an unplanned hardware maintenance event to reduce the impact on the VMs hosted on that hardware. Azure uses live migration technology to migrate the VMs from the failing hardware to a healthy physical machine. It takes a few minutes to be up. Memory, open files, & network connections are maintained, but performance might be reduced before/after an event
@@ -163,36 +172,38 @@
   - To counter any of the above situations Azure offers **Availability Sets**
     - Availability Sets ensure that the Azure VMs are deployed across multiple isolated hardware nodes in a cluster. It provides the redundancy solution by spreading your VMs across multiple _fault domains_ & _update domains_
       - Fault domain (FD)
-        - Two events, Unplanned hardware maintenance events & Unexpected downtime comes under this
-        - Factually a rack of the servers which consume mostly subsystem like network, power, cooling, etc. When you put VMs on an Availability Set, to protect VMs from failure, Azure spreads them over FDs
+        - A logical group of underlying hardware that share a common power source & network switch, similar to a rack within an on-premises datacenter.
+        - Two events, Unplanned hardware maintenance events & Unexpected downtime come under this
         - Suppose we put 2 VMs into availability set, then Azure will set up VMs in 2 different racks so that if the network, power, etc. fails in 1, there is another as backup
       - Update domain (UD)
         - Planned maintenance event - where we planned for server or virtual machine updating
         - Sometimes we need to update some software, or some updates come from Microsoft due to performance, security, etc. issues & it is not automatically updated to your VMs, we need to plan updates. So how is that done without taking your service offline? UDs
-        - It’s similar to the FD, only this time, instead of accidental failure, there is a purposeful move to take down 1 (or more) of your VMs. So to make sure your service doesn’t go offline because of an update, it will walk through your UDs 1 after the other
-- For Availability Sets: Microsoft automatically assigns Virtual Machines across 2 FDs (physical servers) & 5 UDs to minimize uptime during planned & unplanned outages by default. _The maximum number of FD is 3 & the maximum number of UD is 20._
-  - | VM  | FD  | UD  |
-    | --- | --- | --- |
-    | 0   | 0   | 0   |
-    | 1   | 1   | 1   |
-    | 2   | 0   | 2   |
-    | 3   | 1   | 3   |
-    | 4   | 0   | 4   |
-    | 5   | 1   | 0   |
-    | 6   | 0   | 1   |
-    | 7   | 1   | 2   |
+        - It’s similar to the FD, only this time, instead of accidental failure, there is a purposeful move to take down 1 (or more) of your VMs. So to make sure your service doesn’t go offline because of an update, it will go through your UDs 1 after the other
+    - We recommended that **two or more VMs are created within an availability set to provide for a highly available application & to meet the 99.95% Azure SLA.** There is no cost for the Availability Set itself, you only pay for each VM instance that you create. When a single VM is using Azure premium SSDs, the Azure SLA applies for unplanned maintenance events.
+    - For Availability Sets: Microsoft automatically assigns Virtual Machines across 2 FDs (physical servers) & 5 UDs to minimize uptime during planned & unplanned outages by default. _The maximum number of FD is 3 & the maximum number of UD is 20._
+      - | VM  | FD  | UD  |
+        | --- | --- | --- |
+        | 0   | 0   | 0   |
+        | 1   | 1   | 1   |
+        | 2   | 0   | 2   |
+        | 3   | 1   | 3   |
+        | 4   | 0   | 4   |
+        | 5   | 1   | 0   |
+        | 6   | 0   | 1   |
+        | 7   | 1   | 2   |
 - VM Monitoring - Azure Monitoring collects host-level metrics like CPU utilization, disk & network usage for all VMs without any additional software (but you have to Enable guest-level monitoring for more insights & to collect guest-level metrics, logs, etc.) - Need to allocate a storage account for diagnostics data to be sent - Enabling guest-level monitoring takes some time as the storage account may need to be created & the Azure Diagnostics agent installed on the VM
 - VM Custom Script Extension - You want a script to run after the VM is deployed, you do this because it's pointless to just have a base image & no software installed on it - Need to install the Custom Script Extension first - It can download Powershell scripts & files from Azure storage & launch a Powershell script on the VM which in turn can download additional software components
 - Azure Bastion Service - _Must exist on it's own Subnet_ - More secure way (than RDP/SSH) of remotely connecting to a VM - You need to have open ports or have public IP on the VM itself, you connect to the VM through the Bastion
   - The subnet must be named **AzureBastionSubnet**.
   - The subnet must be **at least /27 or larger**.
-- Virtual Machine Scale Sets (VMSS) - Akin to AWS ASG - Grow & shrink (scaling) your resource usage depending on your actual needs - Create & manage a group of identical, load balanced VMs. The number of VM instances can automatically increase or decrease in response to demand or a defined schedule - Provides high availability & app resiliency - Allows your app to automatically scale as resource demand changes - You can set a custom scaling policy that'll allow you to set the CPU threshold %s & how many VMs to increase/decrease by, the max/min number of VMs, etc. - What is the maximum number of virtual machines that a virtual machine scale set can support? _1000_
+- Virtual Machine Scale Sets (VMSS or just "Scale Sets") - Akin to AWS ASG - Grow & shrink (scaling) your resource usage depending on your actual needs - Create & manage a group of identical, load balanced VMs. The number of VM instances can automatically increase or decrease in response to demand or a defined schedule - Provides high availability & app resiliency - Allows your app to automatically scale as resource demand changes - You can set a custom scaling policy that'll allow you to set the CPU threshold %s & how many VMs to increase/decrease by, the max/min number of VMs, etc. - What is the maximum number of virtual machines that a virtual machine scale set can support? _1000_
   - VMSS is a free service, therefore, it does not have a financially backed SLA
+    - Managed Disks also do not have a financially backed SLA
 - _You cannot have VMs that are not in VNets_
 - _A network interface (NIC) is the interconnection between a VM & a virtual network (VNet). A VM must have at least one NIC, but can have more than one_, depending on the size of the VM you create.
   - You can only assign a NIC to a VNet that exists in the _same subscription & location_
   - Once a NIC is created, you cannot change the VNet it is assigned to
-  - The VM you add the NIC to must also exist in the _same location & subscription_
+  - The VM you add the NIC to must also exist in the _same subscription & location_
   - NICs for VMs can have _both a private & public IP address_
 - _VMs must be in the same region as their VNet_
 
@@ -265,7 +276,7 @@
 - Public IP Addresses - You have to create them as a separate resource in Azure, when creating choose things like IP Version, IP address assignment (Dynamic/Static), DNS name label, etc.
 - Network Routing - Done using Route Tables - Which are lists of IP address ranges - Tells Azure how to handle traffic over the VNet - Contains a set of rules, called routes, that specifies how packets should be routed in a VNet. Associated to Subnets, & each packet leaving a Subnet is handled based on the associated route table. Each route table can be associated to multiple subnets, but a subnet can only be associated to a single route table. Packets are matched to routes using the destination, which can be an IP address, a VNet gateway, a virtual appliance, or the internet - When creating a route table the "Address prefix" will have the Subnet's Address space (traffic from), & the "Next hop address" (traffic to) will be that of the "Next hop type's" associated IP - You will also have to "Associate Subnets" when setting up Route Tables
 - Virtual Private Network (VPN) - Allows you to join an external machine/network to an Azure network - Private connection, so there is end-to-end encryption of traffic - Able to access systems bu their private IP address (that have them) - 3 options in Azure: Point to Site (P2S) VPN, Site to Site (S2S) VPN, & Express Route - Both P2S & S2S VPN traffic travel over the public internet but in an encrypted form - S2S requires a physical VPN gateway on your side
-  - Before Azure accepts a P2S VPN connection, the user has to be authenticated first. There are two mechanisms that Azure offers to authenticate a connecting user:
+  - Before Azure accepts a P2S VPN connection, the user has to be authenticated first. There are 2 mechanisms that Azure offers to authenticate a connecting user:
     - When using the native Azure certificate authentication, a client certificate that is present on the device is used to authenticate the connecting user.
       - Certificates are used by Azure to authenticate clients connecting to a VNet over a Point-to-Site VPN connection. Once you obtain a root certificate, you upload the public key information to Azure. The root certificate is then considered 'trusted' by Azure for connection over P2S to the virtual network. You also generate client certificates from the trusted root certificate, & then install them on each client computer. The client certificate is used to authenticate the client when it initiates a connection to the VNet.
       - You can _either generate a unique certificate for each client, or you can use the same certificate for multiple clients._ The advantage to generating unique client certificates is the ability to revoke a single certificate. Otherwise, if multiple clients use the same client certificate to authenticate & you revoke it, you'll need to generate & install new certificates for every client that uses that certificate.
@@ -374,9 +385,9 @@
 - You sign up for Azure Active Directory (Azure AD) Premium. You need to add a user named john@demo.onmicrosoft.com.as an administrator on all the computers that will be joined to the Azure AD domain. Where should you go in Azure AD to configure this setting? _If you go to the Devices blade in Azure AD , you can see the option to add local administrators._
 - When you enable SSPR for your Azure AD organization... \_Users can reset their passwords when they can't sign in (If the user passes the authentication tests, then they can reset their password)
   - When is a user considered registered for SSPR? _A user is considered registered for SSPR when they've registered at least the number of methods that you've required to reset a password. You can set this number in the Azure portal._
-- Microsoft enforces a strong default two-gate password reset policy for _any Azure **administrator** role_
+- Microsoft enforces a strong default 2-gate password reset policy for _any Azure **administrator** role_
   - This policy may be different from the one you have defined for your users, & this policy can't be changed
-    - With a two-gate policy, **\_any** administrators don't have the ability to use security questions\_
+    - With a 2-gate policy, **\_any** administrators don't have the ability to use security questions\_
 - When you connect a Windows device with Azure AD using an AD join, Azure AD adds the following security principles to the local administrators group on the device:
   - Global administrator role
   - Device administrator role
@@ -402,6 +413,7 @@
 - Reader: Only read-only access to RG
 - "Deny assignments" - Block users from performing specific actions even if a role assignment grants them access
 - Creating Custom RBAC Roles - What if none of the Azure-provided Roles are what you need? - You can create custom Roles using Powershell or CLI - You can take the .json of an existing Azure-provided Role & make changes to it, then upload it
+  - ![Sample Role JSON](sampleRoleJSON.png)
 - Cloud Device Administrator Role
   - Limited to enable, disable & delete devices in AAD & read Bitlocker keys if present, but they can't do anything else with the device in ADD & this includes adding them to groups, _unless they are the owner of the group_
 - User Administrator Role
@@ -418,14 +430,18 @@
 - ![Load Balancing](loadBalancing.png)
 - Set up an LB - After you create the LB you need to configure (under "Settings") Backend pools (where resources [VMs] will be associated to either: _Availability Set_ / _Single VM_ / _VMSS_), Health probes (checks over a protocol & port (e.g., TCP over 80 / HTTP over 80 [for this it'll check for 200 response on a set path]), & will do so at a set interval (e.g., every 5 seconds) monitoring if the allowed number of Unhealthy threshold (consecutive failures) is reached), Load balancing rules, etc.
   - Add a Load balancing rule to hook up all the above mentioned configuration items (& things like Protocol, Port, Backend Port, Frontend IP address, etc.) & get the LB up & running
+  - _Standard LB, serving 2 or more Healthy VMs, will be available 99.99% of the time_, Basic LB is _excluded_ from this SLA
+- Session / Client IP affinity
+  - E.g., a company has set up a Load balancer that load balances on port 80 and 443 across 3 VMs, and you have to ensure that the same web server services all clients for each request
+  - By using source IP affinity, connections that are started from the same client computer go tot he same datacenter endpoint
 - Can have single LB managing traffic for more than 1 app - Since it's possible to create more than 1 public IP on an LB - Would also need to create a new Load balancing rule, this time you would provide a different IP address under "Frontend IP address" - Under _Backend port_, you would set this to something different (if your first rule had 80, then this can have 8080) - Now you can serve _a different app_ running on your VMs using this LB - If you do this your should also set up another Health probe that checks on the new port [e.g, 8080])
-- Inbound NAT Rule - Under "Settings" - Forwards incoming traffic to a selected IP address & port combination to a specific VM (instead of _all_, if in your Backend pools you have Availability Set or VMSS set)
-- Create __Application Gateway (AGLB)__ - Layer 7 - For load balancing based on _path_, i.e., what the user types in as the URL - One key benefit is that you can have a Firewall (WAF: Web Application Firewall) associated
+- _Inbound NAT Rule - Under "Settings" - Forwards incoming traffic to a selected IP address & port combination to a specific VM_ (instead of _all_, if in your Backend pools you have Availability Set or VMSS set)
+- Create **Application Gateway (AGLB)** - Layer 7 - For load balancing based on _path_, i.e., what the user types in as the URL - One key benefit is that you can have a Firewall (WAF: Web Application Firewall) associated
   - WAF on AGLB provides centralized protection of your web apps from _common exploits & vulnerabilities. We apps are increasingly targeted by malicious attacks that exploit commonly known vulnerabilities. SQL injection & cross-site scripting are among the most common attacks_
   - Unlike Basic LB, there are no free forms of AGLB - Tiers available are: Standard / Standard V2 / WAF / WAF V2 - You can also choose to have _autoscaling_, & set the max & min - Can also place in multiple AZs for high availability - ALGB lives in a VNet (unlike LB), so at creation you have to associate it with a VNet & Subnet - Backend pools have more options than LBs, you can have: _IP address or FQDN_ (to include VMs hosted in _your own env [e.g., AWS]_) / _VM_ / _VMSS_ / _App Services_
-  - Add a routing rule - Key to AGLBs is the __URL Path Based Routing__ - You can route traffic from a rule's listener to different backend targets (_backend pools_) based on the URL path of the request. You can also apply a different set of HTTP settings based on the URL path
+  - Add a routing rule - Key to AGLBs is the **URL Path Based Routing** - You can route traffic from a rule's listener to different backend targets (_backend pools_) based on the URL path of the request. You can also apply a different set of HTTP settings based on the URL path
   - Multi-site listeners
-    - You can configure routing based on host name or domain name for _more than one web application on the same AGLB. Allows you to configure a more efficient topology for your deployments by adding up to 100+ websites to one AGLB. Each website can be directed to its own backend pool.
+    - You can configure routing based on host name or domain name for \_more than one web application on the same AGLB. Allows you to configure a more efficient topology for your deployments by adding up to 100+ websites to one AGLB. Each website can be directed to its own backend pool.
       E.g., 3 domains, contoso.com, fabrikam.com, & adatum.com, point to the IP address of the AGLB. You'd create 3 multi-site listeneres & configure each listener for the respective port & protcol setting
 - You need to ensure that user requests are always mapped to the same Virtual Machine that processes the initial request. What would you need to set for the Load Balancer? _Set Session Persistence to Client IP_
 - A company has setup a Load balancer that load balances traffic on port 80 & 443 across 3 virtual machines. You have to ensure that all RDP traffic is directed towards a VM named demovm. How would you achieve this? _By creating an inbound NAT rule_
@@ -438,7 +454,14 @@
   - Performance Monitor: You can monitor network connectivity across cloud deployments & on-premises locations, multiple data centers, & branch offices & mission-critical multi-tier applications or microservices. With Performance Monitor, you can detect network issues before users complain.
   - Service Connectivity Monitor: You can monitor the connectivity from your users to the services you care about, determine what infrastructure is in the path, & identify where network bottlenecks occur. You can know about outages before your users, & see the exact location of the issues along your network path.
   - ExpressRoute Monitor: Monitor end-to-end connectivity & performance between your branch offices & Azure, over Azure ExpressRoute.
-- Network Watcher - _Regional_ service that enables you to monitor & diagnose conditions at the network scenario level - You need to enable it for your specific region - **Use case:** You can verify rules set up in NSGs by performing the "IP flow verify", where you can simulate traffic in & out of a VM & see if the remote/local IP/port combination is being allowed to flow
+- Network Watcher - _Regional_ service that enables you to monitor & diagnose conditions at the network scenario level - You need to enable it for your specific region
+  - **Use case:** You can verify rules set up in NSGs by performing the "IP flow verify", where you can simulate traffic in & out of a VM & see if the remote/local IP/port combination is being allowed to flow
+  - IP flow verify
+    - Useful in confirming if a rule in a NSG is blocking ingress or egress traffic to or from a VM
+    - Helps administrators quickly diagnose connectivity issues from or to the internet and from or to the on-premises environment
+  - Variable packet capture
+    - Allows you to create packet capture sessions to track traffic to and from a VM - Useful if there is a requirement to inspect all network traffic between VMs for a specific duration
+    - Uses include gathering network statistics, gaining information on network intrusions, to debug client-server communications, and more
 - The necessary peering connections have been created between vnetwork1 & vnetwork2. The firewalls on the virtual machines have been modified to allow ICMP traffic. But traffic does not seem to flow between the virtual machines when the ping request is made. Which of the following can be used to diagnose the issue? _The issue could be due to the security groups. You can diagnose the issue using IP Flow Verify._
 - To analyze traffic, you need to have an existing network watcher, or enable a network watcher in each region that you have NSGs that you want to analyze traffic for.
   - If you want it to record all the successful & failed connection attempts to a VM, do these things:
